@@ -4,3 +4,9 @@ server:
     encoding:
       charset: UTF-8
       force: true
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    driver-class-name: org.postgresql.Driver
+    username: postgres
+    password: 1234
