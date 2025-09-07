@@ -2,7 +2,7 @@
 **/build/
 !**/src/**/build/
 
-# Ignore Gradle GUI config
+# Ignore Gradle GUI configgit
 gradle-app.setting
 
 # Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
@@ -19,3 +19,6 @@ gradle-app.setting
 .project
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
+
+# Local Spring config
+/src/main/resources/application-local.yml
