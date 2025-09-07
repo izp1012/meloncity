@@ -1,4 +1,4 @@
 package com.meloncity.citiz.dto;
 
-public class PostReqDTO {
+public class PostRespDto {
 }
