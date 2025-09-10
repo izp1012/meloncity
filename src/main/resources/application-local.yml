@@ -10,6 +10,10 @@ spring:
     driver-class-name: org.postgresql.Driver
     username: suzin
     password: pass1234@
+  security:
+    user:
+      name: user
+      password: "{noop}user1234"
   jpa:
     open-in-view: false
     hibernate:
@@ -21,3 +25,6 @@ spring:
   output:
     ansi:
       enabled: always
+logging:
+  level:
+    org.springframework.security: DEBUG

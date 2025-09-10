@@ -1,32 +1,31 @@
 package com.meloncity.citiz.domain;
 
+import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@EntityListeners(AuditingEntityListener.class)
-public class Profile {
+public class Profile extends BaseTimeEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private String email;
-    private String name;
-    private String password;
+    @Column(nullable = false) private String email;
+    @Column(nullable = false, length = 20) private String name;
+    @Column(nullable = false) private String password;
     private String imageUrl;
 
-    @CreatedDate
-    private LocalDateTime createDate;
-    @LastModifiedDate
-    private LocalDateTime updateDate;
+    @Builder
+    public Profile (String email, String name, String password, String imageUrl) {
+        this.email = email;
+        this.name = name;
+        this.password = password;
+        this.imageUrl = imageUrl;
+    }
+
 }
