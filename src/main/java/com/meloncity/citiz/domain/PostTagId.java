@@ -12,7 +12,7 @@ public class PostTagId implements Serializable {
     private Long postId;
     private Long tagId;
 
-    public PostTagId() {}
+    protected PostTagId() {}
     public PostTagId(Long postId, Long tagId) {
         this.postId = postId;
         this.tagId = tagId;

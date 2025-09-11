@@ -3,6 +3,8 @@ package com.meloncity.citiz.domain;
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import com.meloncity.citiz.domain.Post;
 import jakarta.persistence.*;
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,6 +14,7 @@ import java.util.List;
         @Index(name = "ix_comment_parent_id", columnList = "sub_comment_id")
 })
 @SequenceGenerator(name = "comment_seq", sequenceName = "comment_seq", allocationSize = 1)
+@Getter
 public class Comment extends BaseTimeEntity {
 
     @Id
@@ -36,13 +39,6 @@ public class Comment extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> children = new ArrayList<>();
-
-    // getters/setters
-    public Long getId() { return id; }
-    public String getContent() { return content; }
-    public Post getPost() { return post; }
-    public Comment getParent() { return parent; }
-    public List<Comment> getChildren() { return children; }
 
     public void setContent(String content) { this.content = content; }
     public void setPost(Post post) { this.post = post; }

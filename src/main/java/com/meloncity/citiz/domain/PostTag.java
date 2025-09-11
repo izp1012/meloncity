@@ -1,12 +1,14 @@
 package com.meloncity.citiz.domain;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 
 @Entity
 @Table(name = "post_tag", indexes = {
         @Index(name = "ix_post_tag_post_id", columnList = "post_id"),
         @Index(name = "ix_post_tag_tag_id", columnList = "tag_id")
 })
+@Getter
 public class PostTag {
 
     @EmbeddedId
@@ -28,10 +30,6 @@ public class PostTag {
         this.tag = tag;
         this.id = new PostTagId(post.getId(), tag.getId());
     }
-
-    public PostTagId getId() { return id; }
-    public Post getPost() { return post; }
-    public Tag getTag() { return tag; }
 
     public void setPost(Post post) { this.post = post; }
     public void setTag(Tag tag) { this.tag = tag; }
