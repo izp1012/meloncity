@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @Builder
 public class ChatMessage {
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
