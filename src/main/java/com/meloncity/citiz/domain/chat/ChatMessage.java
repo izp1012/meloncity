@@ -3,7 +3,7 @@ package com.meloncity.citiz.domain.chat;
 import com.meloncity.citiz.domain.Profile;
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -24,7 +24,7 @@ public class ChatMessage extends BaseTimeEntity {
     @JoinColumn(name = "room_id")
     private ChatRoom room;
 
-    @NotBlank
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
     private Profile sender;
