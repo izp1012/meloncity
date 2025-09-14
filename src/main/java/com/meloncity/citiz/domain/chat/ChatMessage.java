@@ -1,9 +1,9 @@
-package com.meloncity.citiz.domain;
+package com.meloncity.citiz.domain.chat;
 
+import com.meloncity.citiz.domain.Profile;
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -33,13 +33,14 @@ public class ChatMessage extends BaseTimeEntity {
     private String content;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private ChatStatus Status;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private MessageType type;
 
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
-    public enum MessageType {
-        USER, JOIN, LEAVE
-    }
 }

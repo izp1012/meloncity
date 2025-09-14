@@ -1,4 +1,4 @@
-package com.meloncity.citiz.domain;
+package com.meloncity.citiz.domain.chat;
 
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
