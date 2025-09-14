@@ -1,20 +1,21 @@
 package com.meloncity.citiz.domain;
 
+import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "chat_messages")
-@Data
+@Table(name = "chat")
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChatMessage {
+public class ChatMessage extends BaseTimeEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private Long id;
@@ -23,29 +24,22 @@ public class ChatMessage {
     @JoinColumn(name = "room_id")
     private ChatRoom room;
 
+    @NotBlank
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
-    private User sender;
+    private Profile sender;
 
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "message_type")
-    private MessageType messageType = MessageType.TEXT;
-
-    @Column(name = "created_at")
-    private LocalDateTime createdAt;
+    @Column(name = "type")
+    private MessageType type;
 
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-    }
-
     public enum MessageType {
-        TEXT, IMAGE, FILE
+        USER, JOIN, LEAVE
     }
 }
