@@ -2,7 +2,9 @@ package com.meloncity.citiz.domain;
 
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,7 @@ import java.util.List;
 })
 @SequenceGenerator(name = "profile_seq", sequenceName = "profile_seq", allocationSize = 1)
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Profile extends BaseTimeEntity {
 
     @Id
@@ -34,8 +37,4 @@ public class Profile extends BaseTimeEntity {
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<Post> posts = new ArrayList<>();
 
-    public void setEmail(String email) { this.email = email; }
-    public void setName(String name) { this.name = name; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public void setPassword(String password) { this.password = password; }
 }

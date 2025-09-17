@@ -1,7 +1,9 @@
 package com.meloncity.citiz.domain;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "post_tag", indexes = {
@@ -9,6 +11,7 @@ import lombok.Getter;
         @Index(name = "ix_post_tag_tag_id", columnList = "tag_id")
 })
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostTag {
 
     @EmbeddedId
@@ -24,13 +27,11 @@ public class PostTag {
     @JoinColumn(name = "tag_id", nullable = false)
     private Tag tag;
 
-    public PostTag() {}
-    public PostTag(Post post, Tag tag) {
+
+    //------------생성자-----------------------
+
+    public PostTag(Post post, Tag tag){
         this.post = post;
         this.tag = tag;
-        this.id = new PostTagId(post.getId(), tag.getId());
     }
-
-    public void setPost(Post post) { this.post = post; }
-    public void setTag(Tag tag) { this.tag = tag; }
 }

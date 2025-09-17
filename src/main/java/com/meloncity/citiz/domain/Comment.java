@@ -3,7 +3,9 @@ package com.meloncity.citiz.domain;
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import com.meloncity.citiz.domain.Post;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,6 +17,7 @@ import java.util.List;
 })
 @SequenceGenerator(name = "comment_seq", sequenceName = "comment_seq", allocationSize = 1)
 @Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Comment extends BaseTimeEntity {
 
     @Id
@@ -40,7 +43,12 @@ public class Comment extends BaseTimeEntity {
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Comment> children = new ArrayList<>();
 
-    public void setContent(String content) { this.content = content; }
-    public void setPost(Post post) { this.post = post; }
-    public void setParent(Comment parent) { this.parent = parent; }
+
+    //--------------생성자---------------------------
+
+    public Comment(String content, Post post){
+        this.content = content;
+        this.post = post;
+    }
+
 }
