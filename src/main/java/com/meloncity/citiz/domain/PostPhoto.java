@@ -2,12 +2,17 @@ package com.meloncity.citiz.domain;
 
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "post_photo", indexes = {
         @Index(name = "ix_post_photo_post_id", columnList = "post_id")
 })
 @SequenceGenerator(name = "post_photo_seq", sequenceName = "post_photo_seq", allocationSize = 1)
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostPhoto extends BaseTimeEntity {
 
     @Id
@@ -21,11 +26,9 @@ public class PostPhoto extends BaseTimeEntity {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    // getters/setters
-    public Long getId() { return id; }
-    public String getImgUrl() { return imgUrl; }
-    public Post getPost() { return post; }
 
-    public void setImgUrl(String imgUrl) { this.imgUrl = imgUrl; }
-    public void setPost(Post post) { this.post = post; }
+    public PostPhoto(String imgUrl, Post post){
+        this.imgUrl = imgUrl;
+        this.post = post;
+    }
 }

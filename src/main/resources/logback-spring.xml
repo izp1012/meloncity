@@ -1,0 +1,77 @@
+<configuration>
+    <springProfile name="dev">
+        <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %magenta([%thread]) %highlight([%-3level]) %logger{5} - %msg %n" />
+        <property name="ROLLING_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS}  %logger{5} - %msg %n" />
+        <property name="FILE_NAME" value="/home/ubuntu/melon/logs/melon-back-service.log" />
+        <property name="LOG_NAME_PATTERN" value="./logs/application-%d{yyyy-MM-dd}.%i.log" />
+        <property name="MAX_FILE_SIZE" value="10MB" />
+        <property name="TOTAL_SIZE" value="30MB" />
+        <property name="MAX_HISTORY" value="2" />
+
+        <!-- Console appender 설정 -->
+        <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <Pattern>${CONSOLE_PATTERN}</Pattern>
+            </encoder>
+        </appender>
+
+        <appender name="ROLLING_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <encoder>
+                <pattern>${ROLLING_PATTERN}</pattern>
+            </encoder>
+            <file>${FILE_NAME}</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_NAME_PATTERN}/</fileNamePattern>
+                <maxHistory>${MAX_HISTORY}</maxHistory>
+                <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+                <totalSizeCap>${TOTAL_SIZE}</totalSizeCap>
+                <encoder>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+                </encoder>
+            </rollingPolicy>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="ROLLING_LOG_FILE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="local">
+        <property name="CONSOLE_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %magenta([%thread]) %highlight([%-3level]) %logger{5} - %msg %n" />
+        <property name="ROLLING_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS}  %logger{5} - %msg %n" />
+        <property name="FILE_NAME" value="C:\\wokrspace\\meloncity\\logs\\application.log" />
+        <property name="LOG_NAME_PATTERN" value="./logs/application-%d{yyyy-MM-dd-HH-mm}.%i.log" />
+        <property name="MAX_FILE_SIZE" value="10MB" />
+        <property name="TOTAL_SIZE" value="30MB" />
+        <property name="MAX_HISTORY" value="2" />
+
+        <!-- Console appender 설정 -->
+        <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder>
+                <Pattern>${CONSOLE_PATTERN}</Pattern>
+            </encoder>
+        </appender>
+
+        <appender name="ROLLING_LOG_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+            <encoder>
+                <pattern>${ROLLING_PATTERN}</pattern>
+            </encoder>
+            <file>${FILE_NAME}</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                <fileNamePattern>${LOG_NAME_PATTERN}/</fileNamePattern>
+                <maxHistory>${MAX_HISTORY}</maxHistory>
+                <maxFileSize>${MAX_FILE_SIZE}</maxFileSize>
+                <totalSizeCap>${TOTAL_SIZE}</totalSizeCap>
+                <encoder>
+                    <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+                </encoder>
+            </rollingPolicy>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="ROLLING_LOG_FILE"/>
+        </root>
+    </springProfile>
+</configuration>

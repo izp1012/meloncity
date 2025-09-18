@@ -4,20 +4,24 @@ server:
     encoding:
       charset: UTF-8
       force: true
+#Spring 관련 설정
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
     driver-class-name: org.postgresql.Driver
     username: suzin
     password: pass1234@
-  security:
-    user:
-      name: user
-      password: "{noop}user1234"
+    hikari:
+      connection-timeout: 30000       # 연결 타임아웃: 30초
+      maximum-pool-size: 10           # 최대 연결 풀 크기
+      minimum-idle: 5                 # 최소 유휴 연결 수
+      idle-timeout: 300000            # 유휴 연결 타임아웃: 5분
+      max-lifetime: 1200000           # 연결 최대 수명: 20분
+      connection-test-query: SELECT 1 # 연결 테스트 쿼리
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       '[hibernate.default_batch_fetch_size]': 100
       '[hibernate.format_sql]': true
@@ -25,6 +29,8 @@ spring:
   output:
     ansi:
       enabled: always
-logging:
-  level:
-    org.springframework.security: DEBUG
+
+  security:
+    user:
+      name: user
+      password: 1234

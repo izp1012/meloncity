@@ -5,6 +5,10 @@ import com.meloncity.citiz.domain.Profile;
 import com.meloncity.citiz.domain.PostTag;
 import com.meloncity.citiz.domain.Tag;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +18,8 @@ import java.util.List;
         @Index(name = "ix_post_create_date", columnList = "create_date")
 })
 @SequenceGenerator(name = "post_seq", sequenceName = "post_seq", allocationSize = 1)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class Post extends BaseTimeEntity {
 
     @Id
@@ -38,26 +44,12 @@ public class Post extends BaseTimeEntity {
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostTag> postTags = new ArrayList<>();
 
-    public void addPhoto(PostPhoto photo) {
-        photos.add(photo);
-        photo.setPost(this);
+
+    // --------------생성자---------------
+    public Post(String title, String content, Profile createdBy){
+        this.title = title;
+        this.content = content;
+        this.createdBy = createdBy;
     }
 
-    public void addTag(Tag tag) {
-        PostTag pt = new PostTag(this, tag);
-        postTags.add(pt);
-        tag.getPostTags().add(pt);
-    }
-
-    // getters/setters
-    public Long getId() { return id; }
-    public String getTitle() { return title; }
-    public String getContent() { return content; }
-    public Profile getCreatedBy() { return createdBy; }
-    public List<PostPhoto> getPhotos() { return photos; }
-    public List<PostTag> getPostTags() { return postTags; }
-
-    public void setTitle(String title) { this.title = title; }
-    public void setContent(String content) { this.content = content; }
-    public void setCreatedBy(Profile createdBy) { this.createdBy = createdBy; }
 }
