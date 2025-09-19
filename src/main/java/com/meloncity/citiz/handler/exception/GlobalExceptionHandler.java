@@ -22,7 +22,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ResponseDto<?>> handleCustomApiException(CustomApiException ex) {
         // CustomApiException은 400 BAD REQUEST와 실패 코드(-1)를 반환
         ResponseDto<?> response = new ResponseDto<>(-1, null, ex.getMessage(), CustomDateUtil.toStringFormat(LocalDateTime.now()));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(ex.getStatus()).body(response);
     }
 
     @ExceptionHandler(Exception.class)

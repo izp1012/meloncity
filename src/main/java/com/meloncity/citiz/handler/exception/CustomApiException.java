@@ -1,10 +1,13 @@
 package com.meloncity.citiz.handler.exception;
 
+import org.springframework.http.HttpStatus;
+
 public class CustomApiException extends RuntimeException {
-    public CustomApiException() {
+    private final HttpStatus status;
+
+    public CustomApiException(HttpStatus httpStatus, String message) {
+        super(message); this.status = httpStatus;
     }
 
-    public CustomApiException(String message) {
-        super(message);
-    }
+    public HttpStatus getStatus() {return status;}
 }
