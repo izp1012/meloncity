@@ -22,3 +22,8 @@ gradle-app.setting
 
 # Local Spring config
 /src/main/resources/application-local.yml
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
