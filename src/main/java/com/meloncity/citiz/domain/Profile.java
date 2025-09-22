@@ -14,13 +14,12 @@ import java.util.List;
 @Table(name = "profile", indexes = {
         @Index(name = "ix_profile_email", columnList = "email", unique = true)
 })
-@SequenceGenerator(name = "profile_seq", sequenceName = "profile_seq", allocationSize = 1)
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Profile extends BaseTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "profile_seq")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "email", nullable = false, length = 320)
