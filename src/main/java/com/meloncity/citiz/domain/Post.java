@@ -29,7 +29,6 @@ public class Post extends BaseTimeEntity {
     @Column(name = "title", nullable = false, length = 500)
     private String title;
 
-    @Lob
     @Column(name = "content", nullable = false)
     private String content;
 
@@ -50,6 +49,11 @@ public class Post extends BaseTimeEntity {
         this.title = title;
         this.content = content;
         this.createdBy = createdBy;
+    }
+
+    public void updatePost(String title, String content){
+        this.title = title;
+        this.content = content;
     }
 
 }
