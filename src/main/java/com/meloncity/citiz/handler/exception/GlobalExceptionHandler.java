@@ -2,7 +2,7 @@ package com.meloncity.citiz.handler.exception;
 
 import com.meloncity.citiz.dto.ResponseDto;
 import com.meloncity.citiz.util.CustomDateUtil;
-import lombok.extern.log4j.Log4j2;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.support.MethodArgumentNotValidException;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestControllerAdvice
-@Log4j2
+@Slf4j
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
