@@ -17,6 +17,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/users").permitAll() // 회원가입 API는 열어두기
                         .requestMatchers(HttpMethod.POST, "/users/login").permitAll()
+                        .anyRequest().permitAll()                 // 나머지도 전부 허용 (개발 단계용)
                         .anyRequest().authenticated()
                 )
                 .httpBasic(basic -> {})

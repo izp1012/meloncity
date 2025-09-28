@@ -1,5 +1,5 @@
 package com.meloncity.citiz.domain.chat;
 
 public enum MessageType {
-        USER, JOIN, LEAVE
+        USER, JOIN, LEAVE, CHAT, SYSTEM
 }

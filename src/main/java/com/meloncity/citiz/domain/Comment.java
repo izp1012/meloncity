@@ -24,7 +24,6 @@ public class Comment extends BaseTimeEntity {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "comment_seq")
     private Long id;
 
-    @Lob
     @Column(name = "content", nullable = false)
     private String content;
 
@@ -46,9 +45,13 @@ public class Comment extends BaseTimeEntity {
 
     //--------------생성자---------------------------
 
-    public Comment(String content, Post post){
+    public Comment(String content, Post post, Comment parent){
         this.content = content;
         this.post = post;
+        this.parent = parent;
     }
 
+    public void updateContent(String content){
+        this.content = content;
+    }
 }
