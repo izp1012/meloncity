@@ -21,6 +21,7 @@ gradle-app.setting
 .classpath
 
 # Local Spring config
+application-local.yml
 /src/main/resources/application-local.yml
 
 # IntelliJ IDEA
