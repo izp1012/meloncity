@@ -19,7 +19,7 @@ public record ChatMessageReqDto(
         return ChatMessage.builder()
                 .sender(profile)
                 .content(content)
-                .Status(ChatStatus.SENT)
+                .status(ChatStatus.SENT)
                 .type(type)
                 .room(chatRoom)
                 .build();

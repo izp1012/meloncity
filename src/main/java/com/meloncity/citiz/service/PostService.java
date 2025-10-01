@@ -23,9 +23,9 @@ public class PostService {
     public void savePost(PostReqDto postReqDto){
 
         Optional<Profile> optional = profileRepository.findById(postReqDto.getProfileId());
-        Profile proflie = optional.get();
+        Profile profile = optional.get();
 
-        Post post = new Post(postReqDto.getTitle(), postReqDto.getContent(), proflie);
+        Post post = new Post(postReqDto.getTitle(), postReqDto.getContent(), profile);
 
         postRepository.save(post);
     }
