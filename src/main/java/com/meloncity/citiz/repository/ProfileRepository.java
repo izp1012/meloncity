@@ -11,9 +11,10 @@ import java.util.Optional;
 @Repository
 public interface ProfileRepository extends JpaRepository<Profile, Long> {
     boolean existsByEmail(String email);
-    Optional<Profile> findByEmail(String email);
 
     Page<Profile> findByNameContainingIgnoreCase(String name, Pageable pageable);
     Page<Profile> findByEmailContainingIgnoreCase(String email, Pageable pageable);
     Page<Profile> findByNameContainingIgnoreCaseAndEmailContainingIgnoreCase(String name, String email, Pageable pageable);
+    Optional<Profile> findByEmail(String email);
+    boolean existsById(Long id);
 }
