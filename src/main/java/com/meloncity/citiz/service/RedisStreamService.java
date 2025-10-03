@@ -7,6 +7,7 @@ import com.meloncity.citiz.dto.ChatMessageDto;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.DisposableBean;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -25,11 +26,12 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RedisStreamService {
+public class RedisStreamService implements DisposableBean {
 
     private final RedisTemplate<String, Object> redisTemplate;
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatService chatService;
+    private Thread consumerThread; // 현재 스레드를 저장할 필드
 
     @Getter
     private final StreamSettings streamSettings; // 주입된 StreamSettings 사용
@@ -40,13 +42,17 @@ public class RedisStreamService {
      */
     @Async("taskExecutor") // 별도의 스레드 풀 사용
     public void startConsumingMessages() {
+        this.consumerThread = Thread.currentThread();
+
         log.info("Redis Stream 메시지 소비 시작 - Stream: {}, Group: {}, Consumer: {}",
                 streamSettings.getStreamName(),
                 streamSettings.getConsumerGroup(),
                 streamSettings.getConsumerName());
 
-        while (!Thread.currentThread().isInterrupted()) {
-            try {
+//        while (!Thread.currentThread().isInterrupted()) {
+        while (this.consumerThread != null && !this.consumerThread.isInterrupted()) {
+
+                try {
                 // Consumer Group을 통해 새로운 메시지 읽기 - 설정된 값들 사용
                 List<MapRecord<String, Object, Object>> records = redisTemplate.opsForStream()
                         .read(Consumer.from(streamSettings.getConsumerGroup(), streamSettings.getConsumerName()),
@@ -60,6 +66,12 @@ public class RedisStreamService {
                 }
 
             } catch (Exception e) {
+                if (e instanceof IllegalStateException && e.getMessage() != null && e.getMessage().contains("STOPPED")) {
+                    log.warn("Redis 연결 팩토리가 중지되어 Stream 소비를 중단합니다.");
+                    consumerThread.interrupt(); // 팩토리가 중지되면 루프 종료
+                    break;
+                }
+
                 log.error("Redis Stream 메시지 소비 중 오류 발생", e);
                 // 잠시 대기 후 재시도
                 try {
@@ -259,6 +271,26 @@ public class RedisStreamService {
         log.info("Redis Stream 소비 중지 요청됨");
         // 현재 스레드 인터럽트를 통해 소비 루프를 중지
         // 실제로는 더 정교한 종료 메커니즘이 필요할 수 있음
+    }
+
+    /**
+     * Spring 컨테이너 종료 시 호출되어, 비동기 스레드를 안전하게 종료합니다.
+     */
+    @Override
+    public void destroy() {
+        log.info("Consumer 스레드 인터럽트 요청 중...");
+        if (this.consumerThread != null) {
+            this.consumerThread.interrupt(); // 소비 스레드에 인터럽트 요청
+
+             //필요하다면, 스레드가 종료될 때까지 잠시 대기할 수 있습니다. (예: 3초)
+             try {
+                 this.consumerThread.join(3000);
+             } catch (InterruptedException e) {
+                 Thread.currentThread().interrupt();
+             }
+        }
+        this.stopConsuming(); // 기존 stopConsuming 로직이 있다면 추가 실행
+        log.info("Consumer 스레드 인터럽트 요청 완료.");
     }
 
 }
