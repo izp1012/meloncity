@@ -99,7 +99,7 @@ public class RedisStreamInitializer {
             log.info("Consumer Group '{}' 생성 완료.", consumerGroup);
         } catch (DataAccessException e) {
             // BUSYGROUP 에러는 그룹이 이미 존재한다는 의미
-            if (e.getMessage() != null && e.getMessage().contains("BUSYGROUP")) {
+            if (e.getMessage() != null && e.getCause().toString().contains("BUSYGROUP")) {
                 log.debug("Consumer Group '{}'이 이미 존재합니다.", consumerGroup);
             } else {
                 // 다른 Redis 관련 오류는 재시도 또는 오류 보고가 필요합니다.

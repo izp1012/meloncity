@@ -3,10 +3,7 @@ package com.meloncity.citiz.service;
 import com.meloncity.citiz.config.redis.RedisStreamConfig;
 import com.meloncity.citiz.domain.Profile;
 import com.meloncity.citiz.domain.chat.*;
-import com.meloncity.citiz.dto.ChatMessageDto;
-import com.meloncity.citiz.dto.ChatMessageHistoryResponse;
-import com.meloncity.citiz.dto.ChatRoomCreateRequest;
-import com.meloncity.citiz.dto.ChatRoomResponse;
+import com.meloncity.citiz.dto.*;
 import com.meloncity.citiz.handler.exception.CustomApiException;
 import com.meloncity.citiz.repository.ChatMessageRepository;
 import com.meloncity.citiz.repository.ChatRoomRepository;
@@ -359,5 +356,9 @@ public class ChatService {
         return chatRooms.stream()
                 .map(this::mapToChatRoomResponse) // 기존 매핑 메서드 활용
                 .collect(Collectors.toList());
+    }
+
+    public ChatMessageRespDto sendMessage(ChatMessageReqDto chatMessageReqDto, Long roomId, MessageType messageType) {
+        return null;
     }
 }
