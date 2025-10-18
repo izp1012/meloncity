@@ -34,6 +34,9 @@ public class Profile extends BaseTimeEntity {
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
+    @Column
+    private String role;
+
     @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = false)
     private List<Post> posts = new ArrayList<>();
 
@@ -45,16 +48,4 @@ public class Profile extends BaseTimeEntity {
         this.imageUrl = imageUrl;
     }
 
-    // getters/setters
-    public Long getId() { return id; }
-    public String getEmail() { return email; }
-    public String getName() { return name; }
-    public String getImageUrl() { return imageUrl; }
-    public String getPassword() { return password; }
-    public List<Post> getPosts() { return posts; }
-
-    public void setEmail(String email) { this.email = email; }
-    public void setName(String name) { this.name = name; }
-    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
-    public void setPassword(String password) { this.password = password; }
 }

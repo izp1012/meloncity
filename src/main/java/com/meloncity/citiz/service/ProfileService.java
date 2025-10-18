@@ -17,7 +17,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -30,17 +35,39 @@ public class ProfileService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public String signUp (ProfileSignUpReq req) {
+    public String signUp(ProfileSignUpReq req) {
 
-        if (profileRepository.existsByEmail(req.email())) {
+        if (profileRepository.existsByEmail(req.getEmail())) {
             throw new CustomApiException(HttpStatus.CONFLICT, "email already exists");
         }
+
+        String imageUrl = null;
+        MultipartFile file = req.getProfileImage();
+        if (file != null && !file.isEmpty()) {
+            try {
+                // 로컬 저장 예시 (필요에 따라 S3로 변경 가능)
+                String uploadDir = "uploads/profile/"; // 실제 서버 경로 지정
+                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
+
+                Path savePath = Paths.get(uploadDir, fileName);
+                Files.createDirectories(savePath.getParent());
+                file.transferTo(savePath.toFile());
+
+                // DB에는 저장된 파일 경로만 넣기
+                imageUrl = "/static/profile/" + fileName;
+
+            } catch (IOException e) {
+                throw new CustomApiException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드 실패");
+            }
+        }
+
         Profile profile = Profile.builder()
-                .email(req.email())
-                .password(passwordEncoder.encode(req.password()))
-                .name(req.name())
-                .imageUrl(req.imageUrl())
+                .email(req.getEmail())
+                .password(passwordEncoder.encode(req.getPassword()))
+                .name(req.getName())
+                .imageUrl(imageUrl) // 업로드된 파일 경로 또는 null
                 .build();
+
         profileRepository.save(profile);
 
         return profile.getName();
@@ -51,6 +78,11 @@ public class ProfileService {
                 .orElseThrow(() -> new ResourceNotFoundException("Profile", "id", id));
     }
 
+    public Profile findByEmail(String email) {
+        return profileRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Profile", "email", email));
+    }
+
     public AuthResult login(String email, String password) {
         Profile user = profileRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Profile", "email", email));
@@ -59,7 +91,8 @@ public class ProfileService {
             throw new CustomApiException(HttpStatus.UNAUTHORIZED, "비밀번호가 올바르지 않습니다.");
         }
 
-        return new AuthResult(user.getId(), user.getName(), user.getEmail());
+        //권한 수정 필요함
+        return new AuthResult(user.getId(), user.getName(), user.getEmail(), java.util.List.of("ROLE_USER"));
     }
 
     public PageRes<ProfileRes> searchProfile(String email, String name, int page, int size, Sort sort) {
@@ -85,5 +118,5 @@ public class ProfileService {
         );
     }
 
-    public record AuthResult(Long id, String name, String email) {}
+    public record AuthResult(Long id, String name, String email, List<String> roles) {}
 }

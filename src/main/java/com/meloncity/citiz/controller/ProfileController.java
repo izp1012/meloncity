@@ -1,6 +1,7 @@
 package com.meloncity.citiz.controller;
 
 import com.meloncity.citiz.dto.*;
+import com.meloncity.citiz.security.jwt.JwtTokenProvider;
 import com.meloncity.citiz.service.ProfileService;
 import com.meloncity.citiz.util.CustomDateUtil;
 import jakarta.validation.Valid;
@@ -19,9 +20,10 @@ import java.time.LocalDateTime;
 @Slf4j
 public class ProfileController {
     private final ProfileService profileService;
+    private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
-    public ResponseEntity<ResponseDto<ProfileSignUpResp>> signUp(@Valid @RequestBody ProfileSignUpReq req) {
+    public ResponseEntity<ResponseDto<ProfileSignUpResp>> signUp(@Valid @ModelAttribute ProfileSignUpReq req) {
         String strName = profileService.signUp(req);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -35,12 +37,26 @@ public class ProfileController {
 
     @PostMapping("/login")
     public ResponseEntity<ResponseDto<LoginRes>> login(@RequestBody LoginReq req) {
+
         ProfileService.AuthResult result = profileService.login(req.email(), req.password());
+
+        var roles = (result.roles() != null && !result.roles().isEmpty())
+                ? result.roles()
+                : java.util.List.of("ROLE_USER");
+
+        String token = jwtTokenProvider.createToken(result.email(), roles);
+
+        LoginRes payload = new LoginRes(
+                result.name(),
+                token,
+                jwtTokenProvider.getExpirationSeconds()
+        );
+
         return ResponseEntity
                 .status(HttpStatus.OK)
                 .body(new ResponseDto<>(
                         1,
-                        new LoginRes(result.name()),
+                        payload,
                         "로그인 성공",
                         CustomDateUtil.toStringFormat(LocalDateTime.now())
                 ));
