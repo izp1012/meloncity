@@ -47,7 +47,9 @@ public class ProfileController {
         String token = jwtTokenProvider.createToken(result.email(), roles);
 
         LoginRes payload = new LoginRes(
+                result.id(),
                 result.name(),
+                result.email(),
                 token,
                 jwtTokenProvider.getExpirationSeconds()
         );
