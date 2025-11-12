@@ -34,7 +34,7 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh.expiration}") private long REFRESH_EXPIRATION;
     @Value("${jwt.refresh.header}") private String REFRESH_HEADER;
 
-    private RedisJwtDao redisJwtDao;
+    private final RedisJwtDao redisJwtDao;
 
     private Key key() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));

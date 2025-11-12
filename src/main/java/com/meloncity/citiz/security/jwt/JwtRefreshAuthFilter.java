@@ -32,8 +32,8 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
     @Value("${jwt.refresh.header}") private String REFRESH_TOKEN_HEADER;
     @Value("${jwt.refresh.expiration}") private int REFRESH_TOKEN_EXPRIRE_DATE;
 
-    private JwtTokenProvider jwtTokenProvider;
-    private ProfileRepository profileRepository;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final ProfileRepository profileRepository;
 
 
     @Override
