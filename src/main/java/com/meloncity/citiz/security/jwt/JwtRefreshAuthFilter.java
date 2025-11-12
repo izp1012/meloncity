@@ -104,34 +104,13 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
         String newAccessToken = jwtTokenProvider.createToken(profileId, roles);
         String reIssueRefreshToken = jwtTokenProvider.reIssueRefreshToken(profileId, roles);
 
-        if("local".equals(PROFILES_ACTIVE)){
-            setCookieForLocal(response, reIssueRefreshToken);
-        }else{
-            setCookieForProd(response, reIssueRefreshToken);
-        }
+        Cookie cookie = jwtTokenProvider.createCookie(reIssueRefreshToken);
+        response.addCookie(cookie);
 
         response.getWriter().write(
                 new ObjectMapper().writeValueAsString(Map.of(
                         ACCESS_TOKEN_HEADER, newAccessToken
                 ))
         );
-    }
-
-    private void setCookieForLocal(HttpServletResponse response, String refreshToken) {
-        Cookie cookie = new Cookie(REFRESH_TOKEN_HEADER, refreshToken);
-        cookie.setPath("/"); // 모든 곳에서 쿠키열람이 가능하도록 설정
-        cookie.setMaxAge(60 * 60 * 24 * REFRESH_TOKEN_EXPRIRE_DATE); // day단위
-
-        response.addCookie(cookie);
-    }
-
-    private void setCookieForProd(HttpServletResponse response, String refreshToken) {
-        Cookie cookie = new Cookie(REFRESH_TOKEN_HEADER, refreshToken);
-        cookie.setHttpOnly(true);  //httponly 옵션 설정
-        cookie.setSecure(true); //https 옵션 설정
-        cookie.setPath("/"); // 모든 곳에서 쿠키열람이 가능하도록 설정
-        cookie.setMaxAge(60 * 60 * 24 * REFRESH_TOKEN_EXPRIRE_DATE); // day단위
-
-        response.addCookie(cookie);
     }
 }

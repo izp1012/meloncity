@@ -4,6 +4,7 @@ import com.meloncity.citiz.dto.*;
 import com.meloncity.citiz.security.jwt.JwtTokenProvider;
 import com.meloncity.citiz.service.ProfileService;
 import com.meloncity.citiz.util.CustomDateUtil;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ public class ProfileController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ResponseDto<LoginRes>> login(@RequestBody LoginReq req) {
+    public ResponseEntity<ResponseDto<LoginRes>> login(@RequestBody LoginReq req, HttpServletResponse response) {
 
         ProfileService.AuthResult result = profileService.login(req.email(), req.password());
 
@@ -45,6 +46,7 @@ public class ProfileController {
                 : java.util.List.of("ROLE_USER");
 
         String token = jwtTokenProvider.createToken(result.email(), roles);
+        jwtTokenProvider.createRefreshToken(result.email(), roles, response);
 
         LoginRes payload = new LoginRes(
                 result.id(),

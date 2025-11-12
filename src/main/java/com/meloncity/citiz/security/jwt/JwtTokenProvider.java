@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
@@ -29,6 +30,7 @@ public class JwtTokenProvider {
 
     @Value("${jwt.secret}") private String secret;
     @Value("${jwt.audience}") private String AUDIENCE;
+    @Value("${spring.profiles.active}") private String PROFILES_ACTIVE;
     @Value("${jwt.access.expiration}") private long expiration; // seconds
     @Value("${jwt.issuer}") private String issuer;
     @Value("${jwt.refresh.expiration}") private long REFRESH_EXPIRATION;
@@ -76,20 +78,44 @@ public class JwtTokenProvider {
 
 
     // ##############REFRESH TOKEN ######################
-    public boolean chkRefreshToken(String profileId, String refreshToken) {
-        return refreshToken.equals(redisJwtDao.getValues(profileId + "_" + REFRESH_HEADER).toString());
+    public String createRefreshToken(String subject, List<String> roles, HttpServletResponse response) {
+        Instant now = Instant.now();
+        String refreshToken = Jwts.builder()
+                .setSubject(subject)          // email
+                .setIssuer(issuer)
+                .setAudience(AUDIENCE)
+                .setIssuedAt(Date.from(now))
+                .setExpiration(Date.from(now.plusSeconds(expiration)))
+                .claim("roles", roles)
+                .signWith(key(), SignatureAlgorithm.HS256)
+                .compact();
+
+        redisJwtDao.setValues(REFRESH_HEADER + "_" + subject, refreshToken, Duration.ofDays(REFRESH_EXPIRATION));
+
+        Cookie cookie = createCookie(refreshToken);
+        response.addCookie(cookie);
+
+        return refreshToken;
     }
 
-    public String reIssueRefreshToken(String profileId, List<String> roles) {
+    public boolean chkRefreshToken(String subject, String refreshToken) {
+        return refreshToken.equals(redisJwtDao.getValues(REFRESH_HEADER + "_" + subject).toString());
+    }
+
+    public String reIssueRefreshToken(String subject, List<String> roles) {
         Instant now = Instant.now();
-        return Jwts.builder()
-                .setSubject(profileId)          // email
+        String refreshToken = Jwts.builder()
+                .setSubject(subject)          // email
                 .setIssuer(issuer)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plus(REFRESH_EXPIRATION, ChronoUnit.DAYS)))
                 .claim("roles", roles)
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
+
+        redisJwtDao.setValues(REFRESH_HEADER + "_" + subject, refreshToken, Duration.ofDays(REFRESH_EXPIRATION));
+
+        return refreshToken;
     }
 
     public Optional<String> extractRefreshToken(HttpServletRequest request) {
@@ -132,5 +158,31 @@ public class JwtTokenProvider {
         } catch (IllegalArgumentException e) {
             return TokenValidationResult.EMPTY_OR_NULL;
         }
+    }
+
+    public Cookie createCookie (String refreshToken){
+        if("local".equals(PROFILES_ACTIVE)){
+            return setCookieForLocal(refreshToken);
+        }else{
+            return setCookieForProd(refreshToken);
+        }
+    }
+
+    private Cookie setCookieForLocal(String refreshToken) {
+        Cookie cookie = new Cookie(REFRESH_HEADER, refreshToken);
+        cookie.setPath("/"); // 모든 곳에서 쿠키열람이 가능하도록 설정
+        cookie.setMaxAge((int)Duration.ofDays(REFRESH_EXPIRATION).getSeconds()); //쿠키 만료시간 day
+
+        return cookie;
+    }
+
+    private Cookie setCookieForProd(String refreshToken) {
+        Cookie cookie = new Cookie(REFRESH_HEADER, refreshToken);
+        cookie.setHttpOnly(true);  //httponly 옵션 설정
+        cookie.setSecure(true); //https 옵션 설정
+        cookie.setPath("/"); // 모든 곳에서 쿠키열람이 가능하도록 설정
+        cookie.setMaxAge((int)Duration.ofDays(REFRESH_EXPIRATION).getSeconds()); //쿠키 만료시간 day
+
+        return cookie;
     }
 }
