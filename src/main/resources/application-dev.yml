@@ -29,3 +29,15 @@ spring:
   output:
     ansi:
       enabled: always
+
+
+jwt:
+  secret: spring_security
+  issuer: spring_security
+  audience: spring_security.com
+  access:
+    expiration: 60 #초 단위
+    header: Authorization
+  refresh:
+    expiration: 1 # day 단위
+    header: Authorization-Refresh
