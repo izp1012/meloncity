@@ -2,7 +2,10 @@ package com.meloncity.citiz.security.jwt;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.meloncity.citiz.domain.Profile;
+import com.meloncity.citiz.dto.ResponseDto;
+import com.meloncity.citiz.handler.exception.ResourceNotFoundException;
 import com.meloncity.citiz.repository.ProfileRepository;
+import com.meloncity.citiz.util.CustomDateUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -15,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -46,18 +50,19 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
 
         // 잘못된 메소드 요청인 경우
         if(!HTTP_METHOD.equals(request.getMethod())){
-            response.setStatus(HttpStatus.BAD_REQUEST.value());
-            response.getWriter().write("잘못된 요청입니다.");
-            return ;
+            filterChain.doFilter(request, response);
+            return;
         }
 
         try{
-            String refreshToken = jwtTokenProvider.extractRefreshToken(request).orElseThrow(() -> new NullPointerException());
+            String refreshToken = jwtTokenProvider.extractRefreshToken(request).orElseThrow(() -> new ResourceNotFoundException("RefreshToken", "Cookie", "Null"));
             TokenValidationResult valid = jwtTokenProvider.isValidJwt(refreshToken);
 
             if(valid != TokenValidationResult.SUCCESS){
-                response.setStatus(HttpStatus.UNAUTHORIZED.value());
-                response.getWriter().write("유효하지 않은 토큰입니다.");
+                createReturnMsg(
+                        response,
+                        new ResponseDto<>(-1, null,"Invalid token.", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+                );
                 log.info("Access Denied : RefreshToken이 유효하지 않습니다. serverName : {}", request.getServerName());
 
                 return ;
@@ -65,10 +70,12 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
                 checkRefreshTokenAndReIssueAccessToken(request, response, refreshToken);
             }
 
-        }catch (NullPointerException e){
-            e.printStackTrace();
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.getWriter().write("REFRESH TOKEN이 없습니다.");
+        }catch (ResourceNotFoundException e){
+            createReturnMsg(
+                    response,
+                    new ResponseDto<>(-1, null,"There is no Refresh_Token.", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+            );
+
             return;
         }
 
@@ -82,17 +89,19 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
         Optional<Profile> profile = profileRepository.findByEmail(profileId);
 
         if(profile.isEmpty()){
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.getWriter().write("유효하지 않은 사용자입니다.");
-            log.info("Access Denied : 사용자ID가 유효하지 않습니다. ID : {}", profileId);
-
+            log.info("Access Denied : The user ID is invalid. ID : {}", profileId);
+            createReturnMsg(
+                    response,
+                    new ResponseDto<>(-1, null,"The user ID is invalid.", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+            );
             return;
         }else if(!jwtTokenProvider.chkRefreshToken(profileId, refreshToken)){
             // 레디스에 있는 토큰과 동일한지 확인
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.getWriter().write("발급된 토큰과 다릅니다.");
-            log.info("Access Denied : 발급된 토큰과 다릅니다.");
-
+            log.info("Access Denied : Invalid token.");
+            createReturnMsg(
+                    response,
+                    new ResponseDto<>(-1, null,"Invalid token.", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+            );
             return;
         }
 
@@ -107,10 +116,16 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
         Cookie cookie = jwtTokenProvider.createCookie(reIssueRefreshToken);
         response.addCookie(cookie);
 
-        response.getWriter().write(
-                new ObjectMapper().writeValueAsString(Map.of(
-                        ACCESS_TOKEN_HEADER, newAccessToken
-                ))
+        createReturnMsg(
+                response,
+                new ResponseDto<>(1, Map.of(ACCESS_TOKEN_HEADER, newAccessToken),"Token reissue success", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+        );
+    }
+
+    private void createReturnMsg(HttpServletResponse response, ResponseDto data) throws IOException{
+        new ObjectMapper().writeValue(
+                response.getWriter(),
+                data
         );
     }
 }
