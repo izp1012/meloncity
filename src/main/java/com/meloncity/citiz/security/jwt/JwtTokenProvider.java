@@ -1,8 +1,7 @@
 package com.meloncity.citiz.security.jwt;
 
-import com.meloncity.citiz.config.redis.RedisJwtDao;
-import com.meloncity.citiz.domain.Profile;
-import com.meloncity.citiz.repository.ProfileRepository;
+import com.meloncity.citiz.dao.RedisJwtDao;
+import com.meloncity.citiz.dto.RedisJwtDto;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
@@ -10,7 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
@@ -18,8 +17,8 @@ import java.security.Key;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -90,16 +89,26 @@ public class JwtTokenProvider {
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
 
-        redisJwtDao.setValues(REFRESH_HEADER + "_" + subject, refreshToken, Duration.ofDays(REFRESH_EXPIRATION));
+        RedisJwtDto redisJwtDto = new RedisJwtDto(refreshToken, RedisJwtStatus.ACTIVE);
+        redisJwtDao.setValues(REFRESH_HEADER + "_" + subject, redisJwtDto, Duration.ofDays(REFRESH_EXPIRATION));
 
-        Cookie cookie = createCookie(refreshToken);
-        response.addCookie(cookie);
+        ResponseCookie cookie = createCookie(refreshToken);
+        response.addHeader("Set-Cookie", cookie.toString());
 
         return refreshToken;
     }
 
     public boolean chkRefreshToken(String subject, String refreshToken) {
-        return refreshToken.equals(redisJwtDao.getValues(REFRESH_HEADER + "_" + subject).toString());
+        LinkedHashMap redisjwtDto = (LinkedHashMap)redisJwtDao.getValues(REFRESH_HEADER + "_" + subject);
+        Boolean result = refreshToken.equals(redisjwtDto.get("refreshToken")) && RedisJwtStatus.ACTIVE == redisjwtDto.get("status");
+
+        if(!result){
+            // 문제가 있는 토큰으로 요청시 해당 토큰 상태(ACTIVE -> REVOKED) 변경
+            redisjwtDto.put("status", RedisJwtStatus.REVOKED);
+            redisJwtDao.setValues(REFRESH_HEADER + "_" + subject, redisjwtDto);
+        }
+
+        return result;
     }
 
     public String reIssueRefreshToken(String subject, List<String> roles) {
@@ -113,7 +122,8 @@ public class JwtTokenProvider {
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
 
-        redisJwtDao.setValues(REFRESH_HEADER + "_" + subject, refreshToken, Duration.ofDays(REFRESH_EXPIRATION));
+        RedisJwtDto redisJwtDto = new RedisJwtDto(refreshToken, RedisJwtStatus.ACTIVE);
+        redisJwtDao.setValues(REFRESH_HEADER + "_" + subject, redisJwtDto, Duration.ofDays(REFRESH_EXPIRATION));
 
         return refreshToken;
     }
@@ -160,7 +170,7 @@ public class JwtTokenProvider {
         }
     }
 
-    public Cookie createCookie (String refreshToken){
+    public ResponseCookie createCookie (String refreshToken){
         if("local".equals(PROFILES_ACTIVE)){
             return setCookieForLocal(refreshToken);
         }else{
@@ -168,20 +178,23 @@ public class JwtTokenProvider {
         }
     }
 
-    private Cookie setCookieForLocal(String refreshToken) {
-        Cookie cookie = new Cookie(REFRESH_HEADER, refreshToken);
-        cookie.setPath("/"); // 모든 곳에서 쿠키열람이 가능하도록 설정
-        cookie.setMaxAge((int)Duration.ofDays(REFRESH_EXPIRATION).getSeconds()); //쿠키 만료시간 day
+    private ResponseCookie setCookieForLocal(String refreshToken) {
+        ResponseCookie cookie = ResponseCookie.from(REFRESH_HEADER, refreshToken)
+                .path("/") // 모든 곳에서 쿠키열람이 가능하도록 설정
+                .maxAge((int)Duration.ofDays(REFRESH_EXPIRATION).getSeconds()) //쿠키 만료시간 day
+                .build();
 
         return cookie;
     }
 
-    private Cookie setCookieForProd(String refreshToken) {
-        Cookie cookie = new Cookie(REFRESH_HEADER, refreshToken);
-        cookie.setHttpOnly(true);  //httponly 옵션 설정
-        cookie.setSecure(true); //https 옵션 설정
-        cookie.setPath("/"); // 모든 곳에서 쿠키열람이 가능하도록 설정
-        cookie.setMaxAge((int)Duration.ofDays(REFRESH_EXPIRATION).getSeconds()); //쿠키 만료시간 day
+    private ResponseCookie setCookieForProd(String refreshToken) {
+        ResponseCookie cookie = ResponseCookie.from(REFRESH_HEADER, refreshToken)
+                .httpOnly(true)  //httponly 옵션 설정
+                .secure(true) //https 옵션 설정
+                .path("/") // 모든 곳에서 쿠키열람이 가능하도록 설정
+                .sameSite("Strict") // 쿠키 전송 조건 설정 Strict 또는 Lax 사용
+                .maxAge((int)Duration.ofDays(REFRESH_EXPIRATION).getSeconds()) //쿠키 만료시간 day
+                .build();
 
         return cookie;
     }

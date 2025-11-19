@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -113,8 +114,8 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
         String newAccessToken = jwtTokenProvider.createToken(profileId, roles);
         String reIssueRefreshToken = jwtTokenProvider.reIssueRefreshToken(profileId, roles);
 
-        Cookie cookie = jwtTokenProvider.createCookie(reIssueRefreshToken);
-        response.addCookie(cookie);
+        ResponseCookie cookie = jwtTokenProvider.createCookie(reIssueRefreshToken);
+        response.addHeader("Set-Cookie", cookie.toString());
 
         createReturnMsg(
                 response,
