@@ -2,7 +2,9 @@ package com.meloncity.citiz.domain;
 
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
 import jakarta.persistence.*;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +14,7 @@ import java.util.List;
         @UniqueConstraint(name = "uk_tag_tag", columnNames = "tag")
 })
 @SequenceGenerator(name = "tag_seq", sequenceName = "tag_seq", allocationSize = 1)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
 public class Tag extends BaseTimeEntity {
 
@@ -24,5 +27,9 @@ public class Tag extends BaseTimeEntity {
 
     @OneToMany(mappedBy = "tag", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostTag> postTags = new ArrayList<>();
+
+    public Tag(String tag) {
+        this.tag = tag;
+    }
 
 }
