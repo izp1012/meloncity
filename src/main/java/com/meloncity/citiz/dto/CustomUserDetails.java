@@ -15,13 +15,15 @@ import java.util.List;
 public class CustomUserDetails implements UserDetails {
 
     private final long id;
+    private final String email;
     private final String username;
     private final String password;
     private final Collection<? extends GrantedAuthority> authorities;
 
     @Builder
-    public CustomUserDetails(long id, String username, String password, Collection<? extends GrantedAuthority> authorities) {
+    public CustomUserDetails(long id, String email, String username, String password, Collection<? extends GrantedAuthority> authorities) {
         this.id = id;
+        this.email = email;
         this.username = username;
         this.password = password;
         this.authorities = authorities;

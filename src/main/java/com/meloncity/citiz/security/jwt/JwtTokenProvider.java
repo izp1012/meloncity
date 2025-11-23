@@ -206,6 +206,7 @@ public class JwtTokenProvider {
 
         return CustomUserDetails.builder()
                 .id(profile.getId())
+                .email(profile.getEmail())
                 .username(profile.getName())
                 //.authorities(Collections.singletonList(new SimpleGrantedAuthority(profile.getRole())))
                 .build();
