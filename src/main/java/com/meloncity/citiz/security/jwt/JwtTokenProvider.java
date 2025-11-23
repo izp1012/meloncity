@@ -1,7 +1,11 @@
 package com.meloncity.citiz.security.jwt;
 
 import com.meloncity.citiz.dao.RedisJwtDao;
+import com.meloncity.citiz.domain.Profile;
+import com.meloncity.citiz.dto.CustomUserDetails;
 import com.meloncity.citiz.dto.RedisJwtDto;
+import com.meloncity.citiz.handler.exception.ResourceNotFoundException;
+import com.meloncity.citiz.repository.ProfileRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.http.Cookie;
@@ -17,10 +21,7 @@ import java.security.Key;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 // JwtTokenProvider.java
 @Component
@@ -36,6 +37,7 @@ public class JwtTokenProvider {
     @Value("${jwt.refresh.header}") private String REFRESH_HEADER;
 
     private final RedisJwtDao redisJwtDao;
+    private final ProfileRepository profileRepository;
 
     private Key key() {
         return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
@@ -197,5 +199,15 @@ public class JwtTokenProvider {
                 .build();
 
         return cookie;
+    }
+
+    public CustomUserDetails getUserDetails(String email){
+        Profile profile = profileRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("Profile", "E-mail", email));
+
+        return CustomUserDetails.builder()
+                .id(profile.getId())
+                .username(profile.getName())
+                //.authorities(Collections.singletonList(new SimpleGrantedAuthority(profile.getRole())))
+                .build();
     }
 }

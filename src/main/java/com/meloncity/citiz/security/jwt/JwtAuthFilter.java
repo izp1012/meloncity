@@ -1,5 +1,6 @@
 package com.meloncity.citiz.security.jwt;
 
+import com.meloncity.citiz.dto.CustomUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -38,8 +39,10 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     .map(SimpleGrantedAuthority::new)
                     .toList();
 
+            CustomUserDetails customUserDetails = jwtTokenProvider.getUserDetails(subject);
+
             var authentication =
-                    new UsernamePasswordAuthenticationToken(subject, null, authorities);
+                    new UsernamePasswordAuthenticationToken(customUserDetails,null, authorities);
 
             SecurityContext context = SecurityContextHolder.createEmptyContext();
             context.setAuthentication(authentication);

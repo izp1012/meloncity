@@ -1,5 +1,6 @@
 package com.meloncity.citiz.controller;
 
+import com.meloncity.citiz.dto.CustomUserDetails;
 import com.meloncity.citiz.dto.PostReqDto;
 import com.meloncity.citiz.dto.ResponseDto;
 import com.meloncity.citiz.service.PostService;
@@ -7,6 +8,7 @@ import com.meloncity.citiz.util.CustomDateUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
@@ -34,7 +36,8 @@ public class PostController {
 
     // 게시글 저장
     @PostMapping
-    public ResponseEntity<ResponseDto<String>> savePost(@RequestBody PostReqDto postReqDto){
+    public ResponseEntity<ResponseDto<String>> savePost(@RequestBody PostReqDto postReqDto, @AuthenticationPrincipal CustomUserDetails user){
+        postReqDto.setProfileId(user.getId());
         postService.savePost(postReqDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)

@@ -1,6 +1,7 @@
 package com.meloncity.citiz.dto;
 
 import lombok.Builder;
+import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
@@ -10,6 +11,7 @@ import java.util.Collection;
 import java.util.List;
 
 @SuperBuilder
+@Getter
 public class CustomUserDetails implements UserDetails {
 
     private final long id;
