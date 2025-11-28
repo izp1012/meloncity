@@ -8,17 +8,17 @@ import com.meloncity.citiz.repository.ProfileRepository;
 import com.meloncity.citiz.util.CustomDateUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -61,20 +61,24 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
 
             if(valid != TokenValidationResult.SUCCESS){
                 createReturnMsg(
+                        request,
                         response,
-                        new ResponseDto<>(-1, null,"Invalid token.", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+                        new ResponseDto<>(-1, valid,"Invalid token.", CustomDateUtil.toStringFormat(LocalDateTime.now())),
+                        HttpServletResponse.SC_UNAUTHORIZED
                 );
                 log.info("Access Denied : RefreshToken이 유효하지 않습니다. serverName : {}", request.getServerName());
 
-                return ;
             }else{
                 checkRefreshTokenAndReIssueAccessToken(request, response, refreshToken);
             }
 
+            return;
         }catch (ResourceNotFoundException e){
             createReturnMsg(
+                    request,
                     response,
-                    new ResponseDto<>(-1, null,"There is no Refresh_Token.", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+                    new ResponseDto<>(-1, null,"There is no Refresh_Token.", CustomDateUtil.toStringFormat(LocalDateTime.now())),
+                    HttpServletResponse.SC_UNAUTHORIZED
             );
 
             return;
@@ -92,41 +96,41 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
         if(profile.isEmpty()){
             log.info("Access Denied : The user ID is invalid. ID : {}", profileId);
             createReturnMsg(
+                    request,
                     response,
-                    new ResponseDto<>(-1, null,"The user ID is invalid.", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+                    new ResponseDto<>(-1, TokenValidationResult.INVALID_TOKEN,"The user ID is invalid.", CustomDateUtil.toStringFormat(LocalDateTime.now())),
+                    HttpServletResponse.SC_UNAUTHORIZED
             );
-            return;
         }else if(!jwtTokenProvider.chkRefreshToken(profileId, refreshToken)){
             // 레디스에 있는 토큰과 동일한지 확인
             log.info("Access Denied : Invalid token.");
             createReturnMsg(
+                    request,
                     response,
-                    new ResponseDto<>(-1, null,"Invalid token.", CustomDateUtil.toStringFormat(LocalDateTime.now()))
+                    new ResponseDto<>(-1, TokenValidationResult.INVALID_TOKEN,"Invalid token.", CustomDateUtil.toStringFormat(LocalDateTime.now())),
+                    HttpServletResponse.SC_UNAUTHORIZED
             );
-            return;
+        }else{
+            List<String> roles = Collections.singletonList(profile.get().getRole() == null ? "ROLE_USER": profile.get().getRole());
+
+            String newAccessToken = jwtTokenProvider.createToken(profileId, roles);
+            String reIssueRefreshToken = jwtTokenProvider.reIssueRefreshToken(profileId, roles, response);
+
+            ResponseDto data = new ResponseDto<>(1, newAccessToken,"Token reissue success", CustomDateUtil.toStringFormat(LocalDateTime.now()));
+            createReturnMsg(request, response, data, HttpServletResponse.SC_OK);
         }
-
-        List<String> roles = Collections.singletonList(profile.get().getRole());
-
-        response.setContentType("application/json");
-        response.setCharacterEncoding("utf-8");
-
-        String newAccessToken = jwtTokenProvider.createToken(profileId, roles);
-        String reIssueRefreshToken = jwtTokenProvider.reIssueRefreshToken(profileId, roles);
-
-        ResponseCookie cookie = jwtTokenProvider.createCookie(reIssueRefreshToken);
-        response.addHeader("Set-Cookie", cookie.toString());
-
-        createReturnMsg(
-                response,
-                new ResponseDto<>(1, Map.of(ACCESS_TOKEN_HEADER, newAccessToken),"Token reissue success", CustomDateUtil.toStringFormat(LocalDateTime.now()))
-        );
     }
 
-    private void createReturnMsg(HttpServletResponse response, ResponseDto data) throws IOException{
-        new ObjectMapper().writeValue(
-                response.getWriter(),
-                data
-        );
+    private void createReturnMsg(HttpServletRequest request, HttpServletResponse response, ResponseDto data, int status) throws IOException{
+        jwtTokenProvider.basicResponseSet(request, response, status);
+
+        String json = new ObjectMapper().writeValueAsString(data);
+        byte[] jsonBytes = json.getBytes(StandardCharsets.UTF_8);
+
+        response.setContentLength(jsonBytes.length);
+
+        ServletOutputStream out = response.getOutputStream();
+        out.write(jsonBytes);
+        out.flush();
     }
 }

@@ -86,7 +86,7 @@ public class JwtTokenProvider {
                 .setIssuer(issuer)
                 .setAudience(AUDIENCE)
                 .setIssuedAt(Date.from(now))
-                .setExpiration(Date.from(now.plusSeconds(expiration)))
+                .setExpiration(Date.from(now.plus(REFRESH_EXPIRATION, ChronoUnit.DAYS)))
                 .claim("roles", roles)
                 .signWith(key(), SignatureAlgorithm.HS256)
                 .compact();
@@ -102,7 +102,7 @@ public class JwtTokenProvider {
 
     public boolean chkRefreshToken(String subject, String refreshToken) {
         LinkedHashMap redisjwtDto = (LinkedHashMap)redisJwtDao.getValues(REFRESH_HEADER + "_" + subject);
-        Boolean result = refreshToken.equals(redisjwtDto.get("refreshToken")) && RedisJwtStatus.ACTIVE == redisjwtDto.get("status");
+        Boolean result = refreshToken.equals(redisjwtDto.get("refreshToken")) && RedisJwtStatus.ACTIVE.name().equals(redisjwtDto.get("status"));
 
         if(!result){
             // 문제가 있는 토큰으로 요청시 해당 토큰 상태(ACTIVE -> REVOKED) 변경
@@ -113,11 +113,12 @@ public class JwtTokenProvider {
         return result;
     }
 
-    public String reIssueRefreshToken(String subject, List<String> roles) {
+    public String reIssueRefreshToken(String subject, List<String> roles, HttpServletResponse response) {
         Instant now = Instant.now();
         String refreshToken = Jwts.builder()
                 .setSubject(subject)          // email
                 .setIssuer(issuer)
+                .setAudience(AUDIENCE)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(now.plus(REFRESH_EXPIRATION, ChronoUnit.DAYS)))
                 .claim("roles", roles)
@@ -126,6 +127,9 @@ public class JwtTokenProvider {
 
         RedisJwtDto redisJwtDto = new RedisJwtDto(refreshToken, RedisJwtStatus.ACTIVE);
         redisJwtDao.setValues(REFRESH_HEADER + "_" + subject, redisJwtDto, Duration.ofDays(REFRESH_EXPIRATION));
+
+        ResponseCookie cookie = createCookie(refreshToken);
+        response.addHeader("Set-Cookie", cookie.toString());
 
         return refreshToken;
     }
@@ -210,5 +214,20 @@ public class JwtTokenProvider {
                 .username(profile.getName())
                 //.authorities(Collections.singletonList(new SimpleGrantedAuthority(profile.getRole())))
                 .build();
+    }
+
+    public void basicResponseSet(HttpServletRequest request, HttpServletResponse response, int status){
+        String origin = request.getHeader("Origin");
+        if (origin != null) {
+            response.setHeader("Access-Control-Allow-Origin", origin);
+        }
+
+        response.setHeader("Access-Control-Allow-Credentials", "true");
+        response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type");
+        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+
+        response.setContentType("application/json");
+        response.setCharacterEncoding("utf-8");
+        response.setStatus(status);
     }
 }
