@@ -114,7 +114,7 @@ public class JwtRefreshAuthFilter extends OncePerRequestFilter {
             List<String> roles = Collections.singletonList(profile.get().getRole() == null ? "ROLE_USER": profile.get().getRole());
 
             String newAccessToken = jwtTokenProvider.createToken(profileId, roles);
-            String reIssueRefreshToken = jwtTokenProvider.reIssueRefreshToken(profileId, roles, response);
+            jwtTokenProvider.reIssueRefreshToken(profileId, roles, response);
 
             ResponseDto data = new ResponseDto<>(1, newAccessToken,"Token reissue success", CustomDateUtil.toStringFormat(LocalDateTime.now()));
             createReturnMsg(request, response, data, HttpServletResponse.SC_OK);
