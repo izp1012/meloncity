@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -36,18 +37,18 @@ public class ChatController {
     /**
      * 새로운 채팅방을 생성합니다. (REST API)
      * @param request 채팅방 생성 요청 DTO
-     * @param creatorId 생성자 ID
+     * @param user 생성자
      * @return 생성된 채팅방 정보
      */
     @PostMapping("/rooms")
     public ResponseEntity<ChatRoomResponse> createChatRoom(
             @Valid @RequestBody ChatRoomCreateRequest request,
-            @RequestHeader("User-Id") Long creatorId) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
-        log.info("채팅방 생성 요청 - Creator: {}, Name: {}", creatorId, request.getName());
+        log.info("채팅방 생성 요청 - Creator: {}, Name: {}", user.getId(), request.getName());
 
         try {
-            ChatRoomResponse response = chatService.createChatRoom(request, creatorId);
+            ChatRoomResponse response = chatService.createChatRoom(request, user.getId());
 
             log.info("채팅방 생성 완료 - Room ID: {}", response.getId());
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -78,27 +79,27 @@ public class ChatController {
     /**
      * 채팅방에 참여합니다. (REST API)
      * @param roomId 참여할 채팅방 ID
-     * @param userId 사용자 ID
+     * @param user 사용자
      * @return 성공 여부
      */
     @PostMapping("/rooms/{roomId}/join")
     public ResponseEntity<ResponseDto<String>> joinChatRoom(
             @PathVariable Long roomId,
-            @RequestHeader("User-Id") Long userId) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
-        log.info("채팅방 참여 요청 - Room: {}, User: {}", roomId, userId);
+        log.info("채팅방 참여 요청 - Room: {}, User: {}", roomId, user.getId());
 
         try {
-            boolean success = chatService.joinChatRoom(roomId, userId);
+            boolean success = chatService.joinChatRoom(roomId, user.getId());
 
             if (success) {
                 // 사용자 정보 조회 및 입장 알림 발행
-                Profile profile = profileService.findById(userId);
+                Profile profile = profileService.findById(user.getId());
                 ProfileRespDto profileRespDto = ProfileRespDto.from(profile);
 
-                pubSubService.publishJoinNotification(roomId, userId, profileRespDto.name());
+                pubSubService.publishJoinNotification(roomId, user.getId(), profileRespDto.name());
 
-                log.info("채팅방 참여 완료 - Room: {}, User: {}", roomId, userId);
+                log.info("채팅방 참여 완료 - Room: {}, User: {}", roomId, user.getId());
                 return ResponseEntity.ok(new ResponseDto<>(1, "SUCCESS",
                         "채팅방 참여가 완료되었습니다", CustomDateUtil.toStringFormat(LocalDateTime.now())));
             } else {
@@ -106,7 +107,7 @@ public class ChatController {
                         "채팅방 참여가 실패했습니다", CustomDateUtil.toStringFormat(LocalDateTime.now())));
             }
         } catch (Exception e) {
-            log.error("채팅방 참여 중 오류 발생 - Room: {}, User: {}", roomId, userId, e);
+            log.error("채팅방 참여 중 오류 발생 - Room: {}, User: {}", roomId, user.getId(), e);
             return ResponseEntity.internalServerError().body(new ResponseDto<>(-1, "ERROR",
                     "서버 오류가 발생했습니다", CustomDateUtil.toStringFormat(LocalDateTime.now())));
         }
@@ -115,27 +116,27 @@ public class ChatController {
     /**
      * 채팅방에서 퇴장합니다.
      * @param roomId 퇴장할 채팅방 ID
-     * @param userId 퇴장할 사용자 ID
+     * @param user 퇴장할 사용자
      * @return 성공 여부
      */
     @PostMapping("/rooms/{roomId}/leave")
     public ResponseEntity<ResponseDto<String>> leaveChatRoom(
             @PathVariable Long roomId,
-            @RequestHeader("User-Id") Long userId) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
-        log.info("채팅방 퇴장 요청 - Room: {}, User: {}", roomId, userId);
+        log.info("채팅방 퇴장 요청 - Room: {}, User: {}", roomId, user.getId());
 
         try {
-            boolean success = chatService.leaveChatRoom(roomId, userId);
+            boolean success = chatService.leaveChatRoom(roomId, user.getId());
 
             if (success) {
                 // 사용자 정보 조회 및 퇴장 알림 발행
-                Profile profile = profileService.findById(userId);
+                Profile profile = profileService.findById(user.getId());
                 ProfileRespDto profileRespDto = ProfileRespDto.from(profile);
 
-                pubSubService.publishLeaveNotification(roomId, userId, profileRespDto.name());
+                pubSubService.publishLeaveNotification(roomId, user.getId(), profileRespDto.name());
 
-                log.info("채팅방 퇴장 완료 - Room: {}, User: {}", roomId, userId);
+                log.info("채팅방 퇴장 완료 - Room: {}, User: {}", roomId, user.getId());
                 return ResponseEntity.ok(new ResponseDto<>(1, "SUCCESS",
                         "채팅방 퇴장이 완료되었습니다", CustomDateUtil.toStringFormat(LocalDateTime.now())));
             } else {
@@ -143,7 +144,7 @@ public class ChatController {
                         "채팅방 퇴장에 실패했습니다", CustomDateUtil.toStringFormat(LocalDateTime.now())));
             }
         } catch (Exception e) {
-            log.error("채팅방 퇴장 중 오류 발생 - Room: {}, User: {}", roomId, userId, e);
+            log.error("채팅방 퇴장 중 오류 발생 - Room: {}, User: {}", roomId, user.getId(), e);
             return ResponseEntity.internalServerError().body(new ResponseDto<>(-1, "ERROR",
                     "서버 오류가 발생했습니다", CustomDateUtil.toStringFormat(LocalDateTime.now())));
         }
@@ -151,18 +152,18 @@ public class ChatController {
 
     /**
      * 사용자가 참여한 채팅방 목록을 조회합니다.
-     * @param userId 조회할 사용자 ID
+     * @param user 조회할 사용자
      * @return 참여 중인 채팅방 목록
      */
     @GetMapping("/rooms")
     public ResponseEntity<List<ChatRoomResponse>> getUserChatRooms(
-            @RequestHeader("User-Id") Long userId) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
-        log.info("사용자 채팅방 목록 조회 - User: {}", userId);
+        log.info("사용자 채팅방 목록 조회 - User: {}", user.getId());
 
         try {
-            List<ChatRoomResponse> chatRooms = chatService.getUserChatRooms(userId);
-            log.info("채팅방 목록 조회 완료 - User: {}, Count: {}", userId, chatRooms.size());
+            List<ChatRoomResponse> chatRooms = chatService.getUserChatRooms(user.getId());
+            log.info("채팅방 목록 조회 완료 - User: {}, Count: {}", user.getId(), chatRooms.size());
             return ResponseEntity.ok(chatRooms);
         } catch (Exception e) {
             log.error("채팅방 목록 조회 중 오류 발생", e);
@@ -173,26 +174,26 @@ public class ChatController {
     /**
      * 채팅방 정보를 단건 조회합니다. (비효율적인 로직을 chatService 위임으로 수정)
      * @param roomId 조회할 채팅방 ID
-     * @param userId 요청한 사용자 ID
+     * @param user 요청한 사용자
      * @return 채팅방 정보
      */
     @GetMapping("/rooms/{roomId}")
     public ResponseEntity<ChatRoomResponse> getChatRoom(
             @PathVariable Long roomId,
-            @RequestHeader("User-Id") Long userId) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
-        log.info("채팅방 정보 조회 - Room: {}, User: {}", roomId, userId);
+        log.info("채팅방 정보 조회 - Room: {}, User: {}", roomId, user);
 
         try {
             // 💡 단건 조회 메서드를 사용하도록 수정 (ChatService에 getChatRoom이 추가되었다고 가정)
-            ChatRoomResponse chatRoom = chatService.getChatRoom(roomId, userId);
+            ChatRoomResponse chatRoom = chatService.getChatRoom(roomId, user.getId());
 
             log.info("채팅방 정보 조회 완료 - Room: {}", roomId);
             return ResponseEntity.ok(chatRoom);
 
         } catch (IllegalArgumentException e) {
             log.warn("채팅방 정보 조회 실패 - Room: {}, User: {}, Reason: {}",
-                    roomId, userId, e.getMessage());
+                    roomId, user.getId(), e.getMessage());
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             log.error("채팅방 정보 조회 중 오류 발생", e);
@@ -203,7 +204,7 @@ public class ChatController {
     /**
      * 채팅방의 메시지 히스토리를 조회합니다.
      * @param roomId 채팅방 ID
-     * @param userId 요청한 사용자 ID
+     * @param user 요청한 사용자
      * @param page 페이지 번호 (기본값: 0)
      * @param size 페이지 크기 (기본값: 50, 최대: 100)
      * @return 메시지 히스토리 목록
@@ -211,24 +212,24 @@ public class ChatController {
     @GetMapping("/rooms/{roomId}/messages")
     public ResponseEntity<List<ChatMessageHistoryResponse>> getChatHistory(
             @PathVariable Long roomId,
-            @RequestHeader("User-Id") Long userId,
+            @AuthenticationPrincipal CustomUserDetails user,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
         log.info("채팅 히스토리 조회 - Room: {}, User: {}, Page: {}, Size: {}",
-                roomId, userId, page, size);
+                roomId, user.getId(), page, size);
 
         try {
             // 페이지 크기 제한 (최대 100개)
             size = Math.min(size, 100);
 
-            List<ChatMessageHistoryResponse> messages = chatService.getChatHistory(roomId, userId, page, size);
+            List<ChatMessageHistoryResponse> messages = chatService.getChatHistory(roomId, user.getId(), page, size);
             log.info("채팅 히스토리 조회 완료 - Room: {}, Messages: {}", roomId, messages.size());
             return ResponseEntity.ok(messages);
 
         } catch (IllegalArgumentException e) {
             log.warn("채팅 히스토리 조회 실패 - Room: {}, User: {}, Reason: {}",
-                    roomId, userId, e.getMessage());
+                    roomId, user.getId(), e.getMessage());
             return ResponseEntity.badRequest().build();
         } catch (Exception e) {
             log.error("채팅 히스토리 조회 중 오류 발생", e);
@@ -239,26 +240,26 @@ public class ChatController {
     /**
      * 메시지를 읽음 처리합니다.
      * @param messageId 읽음 처리할 메시지 ID
-     * @param userId 메시지를 읽은 사용자 ID
+     * @param user 메시지를 읽은 사용자
      * @return 읽음 처리 결과
      */
     @PutMapping("/messages/{messageId}/read")
     public ResponseEntity<ResponseDto<String>> markMessageAsRead(
             @PathVariable Long messageId,
-            @RequestHeader("User-Id") Long userId) {
+            @AuthenticationPrincipal CustomUserDetails user) {
 
-        log.info("메시지 읽음 처리 요청 - Message: {}, User: {}", messageId, userId);
+        log.info("메시지 읽음 처리 요청 - Message: {}, User: {}", messageId, user.getId());
 
         try {
-            chatService.markMessageAsRead(messageId, userId);
-            log.info("메시지 읽음 처리 완료 - Message: {}, User: {}", messageId, userId);
+            chatService.markMessageAsRead(messageId, user.getId());
+            log.info("메시지 읽음 처리 완료 - Message: {}, User: {}", messageId, user.getId());
 
             return ResponseEntity.ok(new ResponseDto<>(1, "SUCCESS",
                     "메시지가 읽음 처리되었습니다", CustomDateUtil.toStringFormat(LocalDateTime.now())));
 
         } catch (IllegalArgumentException e) {
             log.warn("메시지 읽음 처리 실패 - Message: {}, User: {}, Reason: {}",
-                    messageId, userId, e.getMessage());
+                    messageId, user.getId(), e.getMessage());
             return ResponseEntity.badRequest().body(new ResponseDto<>(-1, "FAILED",
                     e.getMessage(), CustomDateUtil.toStringFormat(LocalDateTime.now())));
         } catch (Exception e) {
