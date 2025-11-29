@@ -34,4 +34,13 @@ public class PostTag {
         this.post = post;
         this.tag = tag;
     }
+
+    public PostTag(Tag tag){
+        this.tag = tag;
+    }
+
+    public void setPost(Post post){
+        this.post = post;
+        this.id = new PostTagId(this.post.getId(), this.tag.getId());
+    }
 }

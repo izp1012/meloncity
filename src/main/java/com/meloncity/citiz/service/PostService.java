@@ -1,17 +1,18 @@
 package com.meloncity.citiz.service;
 
-import com.meloncity.citiz.domain.Post;
-import com.meloncity.citiz.domain.PostTag;
-import com.meloncity.citiz.domain.Profile;
-import com.meloncity.citiz.domain.Tag;
+import com.meloncity.citiz.domain.*;
 import com.meloncity.citiz.dto.PostReqDto;
+import com.meloncity.citiz.handler.exception.ResourceNotFoundException;
 import com.meloncity.citiz.repository.PostRepository;
 import com.meloncity.citiz.repository.PostTagRepository;
 import com.meloncity.citiz.repository.ProfileRepository;
+import com.meloncity.citiz.util.file.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,21 +25,31 @@ public class PostService {
     private final ProfileRepository profileRepository;
     private final PostTagRepository postTagRepository;
     private final TagService tagService;
+    private final FileStorageService fileStorageService;
 
-    public void savePost(PostReqDto postReqDto){
+    public void savePost(PostReqDto postReqDto) throws IOException {
 
         Optional<Profile> optional = profileRepository.findById(postReqDto.getProfileId());
-        Profile profile = optional.get();
+        Profile profile = optional.orElseThrow(() -> new ResourceNotFoundException("Profile", "Id", postReqDto.getProfileId()));
 
         Post post = new Post(postReqDto.getTitle(), postReqDto.getContent(), profile);
 
-        postRepository.save(post);
+        // 게시물 파일 셋팅
+        if(postReqDto.getImages() != null){
+            for(MultipartFile file : postReqDto.getImages()){
+                String fileDir = fileStorageService.upload(file);
+                post.addPhoto(new PostPhoto(fileDir));
+            }
+        }
 
+        // 태그 저장
         for (String tagName : postReqDto.getTagIds()) {
             Tag tag = tagService.findOrCreate(tagName);
-            PostTag postTag = new PostTag(post, tag);
-            postTagRepository.save(postTag);
+            PostTag postTag = new PostTag(tag);
+            post.addTag(postTag);
         }
+
+        postRepository.save(post);
     }
 
     public void updatePost(PostReqDto postReqDto){

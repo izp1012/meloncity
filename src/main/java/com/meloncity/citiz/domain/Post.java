@@ -1,9 +1,6 @@
 package com.meloncity.citiz.domain;
 
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
-import com.meloncity.citiz.domain.Profile;
-import com.meloncity.citiz.domain.PostTag;
-import com.meloncity.citiz.domain.Tag;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -56,4 +53,13 @@ public class Post extends BaseTimeEntity {
         this.content = content;
     }
 
+    public void addPhoto(PostPhoto postPhoto){
+        photos.add(postPhoto);
+        postPhoto.setPost(this);
+    }
+
+    public void addTag(PostTag postTag){
+        postTags.add(postTag);
+        postTag.setPost(this);
+    }
 }

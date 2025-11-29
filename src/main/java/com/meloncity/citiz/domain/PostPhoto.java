@@ -27,8 +27,11 @@ public class PostPhoto extends BaseTimeEntity {
     private Post post;
 
 
-    public PostPhoto(String imgUrl, Post post){
+    public PostPhoto(String imgUrl){
         this.imgUrl = imgUrl;
+    }
+
+    protected void setPost(Post post){
         this.post = post;
     }
 }

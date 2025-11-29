@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 
 @RestController
@@ -36,9 +37,10 @@ public class PostController {
 
     // 게시글 저장
     @PostMapping
-    public ResponseEntity<ResponseDto<String>> savePost(@RequestBody PostReqDto postReqDto, @AuthenticationPrincipal CustomUserDetails user){
+    public ResponseEntity<ResponseDto<String>> savePost(@ModelAttribute PostReqDto postReqDto, @AuthenticationPrincipal CustomUserDetails user) throws IOException {
         postReqDto.setProfileId(user.getId());
         postService.savePost(postReqDto);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(new ResponseDto<>(
