@@ -64,7 +64,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 out.write(jsonBytes);
                 out.flush();
 
-                log.info("Access Denied : RefreshToken이 유효하지 않습니다. serverName : {}", request.getServerName());
+                log.info("Access Denied : Token이 유효하지 않습니다. serverName : {}", request.getServerName());
 
                 return ;
             }
