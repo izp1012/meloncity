@@ -2,6 +2,7 @@ package com.meloncity.citiz.controller;
 
 import com.meloncity.citiz.dto.CustomUserDetails;
 import com.meloncity.citiz.dto.PostReqDto;
+import com.meloncity.citiz.dto.PostRespDto;
 import com.meloncity.citiz.dto.ResponseDto;
 import com.meloncity.citiz.service.PostService;
 import com.meloncity.citiz.util.CustomDateUtil;
@@ -30,9 +31,17 @@ public class PostController {
 
     // 게시글 조회
     @GetMapping("/{id}")
-    public String getPost(@PathVariable Long id){
-        postService.getPost(id);
-        return "getPost";
+    public ResponseEntity<ResponseDto<PostRespDto>> getPost(@PathVariable Long id){
+        PostRespDto postRespDto = postService.getPost(id);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(new ResponseDto<>(
+                        1,
+                        postRespDto,
+                        "게시글 조회 완료",
+                        CustomDateUtil.toStringFormat(LocalDateTime.now())
+                ));
     }
 
     // 게시글 저장

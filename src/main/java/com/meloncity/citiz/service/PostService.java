@@ -2,6 +2,7 @@ package com.meloncity.citiz.service;
 
 import com.meloncity.citiz.domain.*;
 import com.meloncity.citiz.dto.PostReqDto;
+import com.meloncity.citiz.dto.PostRespDto;
 import com.meloncity.citiz.handler.exception.ResourceNotFoundException;
 import com.meloncity.citiz.repository.PostRepository;
 import com.meloncity.citiz.repository.PostTagRepository;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -76,10 +78,30 @@ public class PostService {
         postTagRepository.deleteAllByPost(post);
         postRepository.delete(post);
     }
-    public Post getPost(Long id){
-        Optional<Post> optional = postRepository.findById(id);
+    public PostRespDto getPost(Long id){
+        Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
-        return optional.get();
+        PostRespDto postRespDto = new PostRespDto();
+        postRespDto.setProfileId(post.getCreatedBy().getId());
+        postRespDto.setPostId(post.getId());
+        postRespDto.setTitle(post.getTitle());
+        postRespDto.setContent(post.getContent());
+
+        // 사진
+        List<String> images = new ArrayList<>();
+        for(PostPhoto postPhoto : post.getPhotos()){
+            images.add("/img/" + postPhoto.getImgUrl());
+        }
+        postRespDto.setImages(images);
+
+        // 태그
+        List<String> tags = new ArrayList<>();
+        for(PostTag postTag : post.getPostTags()){
+            tags.add(postTag.getTag().getTag());
+        }
+        postRespDto.setTags(tags);
+
+        return postRespDto;
     }
 
     public List<Post> getPostAll(){

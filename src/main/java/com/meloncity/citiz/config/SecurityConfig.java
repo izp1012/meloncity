@@ -32,7 +32,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // ✅ CSRF 체크 비활성화
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/users/**").permitAll()
+                        //.requestMatchers("/users/**").permitAll()
 //                        .anyRequest().authenticated()
                         .anyRequest().permitAll()                 // 나머지도 전부 허용 (개발 단계용)
                 )
