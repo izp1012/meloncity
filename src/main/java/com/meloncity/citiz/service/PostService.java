@@ -1,6 +1,7 @@
 package com.meloncity.citiz.service;
 
 import com.meloncity.citiz.domain.*;
+import com.meloncity.citiz.dto.CustomUserDetails;
 import com.meloncity.citiz.dto.PostReqDto;
 import com.meloncity.citiz.dto.PostRespDto;
 import com.meloncity.citiz.handler.exception.ResourceNotFoundException;
@@ -14,9 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -36,7 +36,7 @@ public class PostService {
 
         Post post = new Post(postReqDto.getTitle(), postReqDto.getContent(), profile);
 
-        // 게시물 파일 셋팅
+        // 게시물 파일 저장
         if(postReqDto.getImages() != null){
             for(MultipartFile file : postReqDto.getImages()){
                 String fileDir = fileStorageService.upload(file);
@@ -47,36 +47,73 @@ public class PostService {
         // 태그 저장
         for (String tagName : postReqDto.getTagIds()) {
             Tag tag = tagService.findOrCreate(tagName);
-            PostTag postTag = new PostTag(tag);
+            PostTag postTag = new PostTag(post, tag);
             post.addTag(postTag);
         }
 
         postRepository.save(post);
     }
 
-    public void updatePost(PostReqDto postReqDto){
+    public String updatePost(Long id, PostReqDto postReqDto, CustomUserDetails user){
+        String result = "SUCCESS";
 
-        Optional<Post> optional = postRepository.findById(postReqDto.getPostId());
-        Post post = optional.get();
+        Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
-        postTagRepository.deleteAllByPost(post);
-        for (String tagName : postReqDto.getTagIds()) {
-            Tag tag = tagService.findOrCreate(tagName);
-            PostTag postTag = new PostTag(post, tag);
-            postTagRepository.save(postTag);
+        if(!post.getCreatedBy().getId().equals(user.getId())){
+            result = "PERMISSION DENIED";
+        }else{
+            // 게시물 내용 변경, 파일/태그 제외
+            post.updatePost(postReqDto);
+
+            // 2. 새 태그 목록 (중복 방지용 Set)
+            Set<String> newTagNames = new HashSet<>(postReqDto.getTagIds());
+
+            // 3. 현재 글에 달려있는 태그 이름들
+            List<PostTag> currentPostTags = post.getPostTags();
+            Set<String> currentTagNames = currentPostTags.stream()
+                    .map(pt -> pt.getTag().getTag())
+                    .collect(Collectors.toSet());
+
+            // 4. 삭제 대상: 기존에는 있었지만, 새 목록에는 없는 태그들
+            //    → PostTag 엔티티 삭제 (orphanRemoval에 맡김)
+            currentPostTags.removeIf(pt -> !newTagNames.contains(pt.getTag().getTag()));
+
+            // 5. 추가 대상: 새 목록에는 있는데, 기존에는 없던 태그들
+            Set<String> toAdd = newTagNames.stream()
+                    .filter(tagName -> !currentTagNames.contains(tagName))
+                    .collect(Collectors.toSet());
+
+            // 태그 변경
+            for (String tagName : toAdd) {
+                Tag tag = tagService.findOrCreate(tagName);
+                PostTag postTag = new PostTag(post, tag);
+                post.addTag(postTag);
+            }
+
+            postRepository.save(post);
         }
 
-        post.updatePost(postReqDto.getTitle(), postReqDto.getContent());
-
-        postRepository.save(post);
+        return result;
     }
 
-    public void deletePost(Long id){
+    public String deletePost(Long id, CustomUserDetails user) throws IOException{
+        String result = "SUCCESS";
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found"));
 
-        postTagRepository.deleteAllByPost(post);
-        postRepository.delete(post);
+        if(!post.getCreatedBy().getId().equals(user.getId())){
+            result = "PERMISSION DENIED";
+        }else{
+            //게시물 파일 삭제
+            List<PostPhoto> photos = post.getPhotos();
+            for(PostPhoto postPhoto: photos){
+                fileStorageService.delete(postPhoto.getImgUrl());
+            }
+
+            postRepository.delete(post);
+        }
+
+        return result;
     }
     public PostRespDto getPost(Long id){
         Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Post not found"));

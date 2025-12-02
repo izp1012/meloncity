@@ -7,4 +7,5 @@ import java.io.IOException;
 public interface FileStorageService {
     String upload(MultipartFile file) throws IOException;
     String getBaseDir();
+    void delete(String fileName) throws IOException;
 }

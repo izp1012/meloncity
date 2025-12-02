@@ -1,6 +1,7 @@
 package com.meloncity.citiz.domain;
 
 import com.meloncity.citiz.domain.common.BaseTimeEntity;
+import com.meloncity.citiz.dto.PostReqDto;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -48,9 +49,9 @@ public class Post extends BaseTimeEntity {
         this.createdBy = createdBy;
     }
 
-    public void updatePost(String title, String content){
-        this.title = title;
-        this.content = content;
+    public void updatePost(PostReqDto postReqDto){
+        this.title = postReqDto.getTitle();
+        this.content = postReqDto.getContent();
     }
 
     public void addPhoto(PostPhoto postPhoto){
@@ -60,6 +61,5 @@ public class Post extends BaseTimeEntity {
 
     public void addTag(PostTag postTag){
         postTags.add(postTag);
-        postTag.setPost(this);
     }
 }

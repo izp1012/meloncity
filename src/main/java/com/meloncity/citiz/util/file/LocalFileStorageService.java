@@ -34,4 +34,12 @@ public class LocalFileStorageService implements FileStorageService{
     public String getBaseDir() {
         return properties.getLocal().getBaseDir();
     }
+
+    @Override
+    public void delete (String fileName) throws IOException {
+        String baseDir = properties.getLocal().getBaseDir();
+        Path path = Paths.get(baseDir, fileName);
+
+        Files.delete(path);
+    }
 }

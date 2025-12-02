@@ -61,23 +61,34 @@ public class PostController {
     }
 
     // 게시글 변경
-    @PostMapping("/{id}")
-    public String updatePost(@PathVariable Long id, @RequestBody PostReqDto postReqDto){
-//        System.out.println("getContent : " + postReqDto.getContent());
-//        System.out.println("getTitle : " + postReqDto.getTitle());
-//        System.out.println("postReqDto.getImgUrls() : " + postReqDto.getImgUrls().get(0));
-//        System.out.println("postReqDto.getImgUrls() : " + postReqDto.getImgUrls().get(1));
+    @PutMapping("/{id}")
+    public ResponseEntity<ResponseDto<String>> updatePost(@PathVariable Long id, @ModelAttribute PostReqDto postReqDto, @AuthenticationPrincipal CustomUserDetails user){
+        String result = postService.updatePost(id, postReqDto, user);
+        int resultCode = "SUCCESS".equals(result) ? 1 : -1 ;
 
-        postReqDto.setPostId(id);
-        postService.updatePost(postReqDto);
-
-        return "updatePost";
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new ResponseDto<>(
+                        resultCode,
+                        result,
+                        result,
+                        CustomDateUtil.toStringFormat(LocalDateTime.now())
+                ));
     }
 
     // 게시글 삭제
     @DeleteMapping("/{id}")
-    public String deletePost(@PathVariable Long id){
-        postService.deletePost(id);
-        return "updatePost";
+    public ResponseEntity<ResponseDto<String>> deletePost(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) throws IOException {
+        String result = postService.deletePost(id, user);
+        int resultCode = "SUCCESS".equals(result) ? 1 : -1 ;
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new ResponseDto<>(
+                        resultCode,
+                        result,
+                        result,
+                        CustomDateUtil.toStringFormat(LocalDateTime.now())
+                ));
     }
 }

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
@@ -18,9 +19,9 @@ public class PostReqDto {
     private String content;
 
     //post_photo Entity
-    private List<String> imgUrls; // 파일 경로
-    private List<MultipartFile> images; // 실제 파일 데이터
+    private List<String> imgUrls = new ArrayList<String>();; // 파일 경로
+    private List<MultipartFile> images = new ArrayList<MultipartFile>(); // 실제 파일 데이터
 
     //post_tag Entity
-    private List<String> tagIds;
+    private List<String> tagIds = new ArrayList<String>();
 }
