@@ -41,6 +41,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             TokenValidationResult valid = jwtTokenProvider.isValidJwt(token);
 
             if(valid != TokenValidationResult.SUCCESS){
+                log.info("Access Denied : Token이 유효하지 않습니다. serverName : {}", request.getServerName());
+
                 String origin = request.getHeader("Origin");
                 if (origin != null) {
                     response.setHeader("Access-Control-Allow-Origin", origin);
@@ -63,8 +65,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 ServletOutputStream out = response.getOutputStream();
                 out.write(jsonBytes);
                 out.flush();
-
-                log.info("Access Denied : Token이 유효하지 않습니다. serverName : {}", request.getServerName());
 
                 return ;
             }
