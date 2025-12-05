@@ -198,7 +198,8 @@ public class JwtTokenProvider {
                 .httpOnly(true)  //httponly 옵션 설정
                 .secure(true) //https 옵션 설정
                 .path("/") // 모든 곳에서 쿠키열람이 가능하도록 설정
-                .sameSite("Strict") // 쿠키 전송 조건 설정 Strict 또는 Lax 사용
+                .domain("citiz-frontend.vercel.app")
+                .sameSite("Lax") // 쿠키 전송 조건 설정 Strict 또는 Lax 사용
                 .maxAge((int)Duration.ofDays(REFRESH_EXPIRATION).getSeconds()) //쿠키 만료시간 day
                 .build();
 
