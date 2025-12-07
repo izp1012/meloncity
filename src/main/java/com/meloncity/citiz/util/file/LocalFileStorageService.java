@@ -20,7 +20,9 @@ public class LocalFileStorageService implements FileStorageService{
     @Override
     public String upload(MultipartFile file) throws IOException {
         String baseDir = properties.getLocal().getBaseDir();
-        String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+        String originalFilename = file.getOriginalFilename();
+        String ext = originalFilename.substring(originalFilename.lastIndexOf("."));
+        String fileName = UUID.randomUUID() + ext;
 
         Path path = Paths.get(baseDir, fileName);
 
