@@ -7,6 +7,7 @@ import com.meloncity.citiz.dto.ProfileSignUpReq;
 import com.meloncity.citiz.handler.exception.CustomApiException;
 import com.meloncity.citiz.handler.exception.ResourceNotFoundException;
 import com.meloncity.citiz.repository.ProfileRepository;
+import com.meloncity.citiz.util.file.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,7 @@ public class ProfileService {
 
     private final ProfileRepository profileRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FileStorageService fileStorageService;
 
     @Transactional
     public String signUp(ProfileSignUpReq req) {
@@ -41,21 +43,11 @@ public class ProfileService {
             throw new CustomApiException(HttpStatus.CONFLICT, "email already exists");
         }
 
-        String imageUrl = null;
+        String fileDir = null;
         MultipartFile file = req.getProfileImage();
         if (file != null && !file.isEmpty()) {
             try {
-                // 로컬 저장 예시 (필요에 따라 S3로 변경 가능)
-                String uploadDir = "uploads/profile/"; // 실제 서버 경로 지정
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-
-                Path savePath = Paths.get(uploadDir, fileName);
-                Files.createDirectories(savePath.getParent());
-                file.transferTo(savePath.toFile());
-
-                // DB에는 저장된 파일 경로만 넣기
-                imageUrl = "/static/profile/" + fileName;
-
+                fileDir = fileStorageService.upload(file);
             } catch (IOException e) {
                 throw new CustomApiException(HttpStatus.INTERNAL_SERVER_ERROR, "이미지 업로드 실패");
             }
@@ -65,7 +57,7 @@ public class ProfileService {
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .name(req.getName())
-                .imageUrl(imageUrl) // 업로드된 파일 경로 또는 null
+                .imageUrl(fileDir)
                 .build();
 
         profileRepository.save(profile);
@@ -92,7 +84,7 @@ public class ProfileService {
         }
 
         //권한 수정 필요함
-        return new AuthResult(user.getId(), user.getName(), user.getEmail(), java.util.List.of("ROLE_USER"));
+        return new AuthResult(user.getId(), user.getName(), user.getEmail(), user.getImageUrl(), java.util.List.of("ROLE_USER"));
     }
 
     public PageRes<ProfileRes> searchProfile(String email, String name, int page, int size, Sort sort) {
@@ -118,5 +110,5 @@ public class ProfileService {
         );
     }
 
-    public record AuthResult(Long id, String name, String email, List<String> roles) {}
+    public record AuthResult(Long id, String name, String email, String imgUrl, List<String> roles) {}
 }
