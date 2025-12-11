@@ -31,6 +31,10 @@ public class Comment extends BaseTimeEntity {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by", nullable = false)
+    private Profile createdBy;
+
     /**
      * 스키마의 sub_comment_id (NVARCHAR2) 를 '부모 댓글 ID'로 해석해 자기참조 매핑.
      * 실제 DB 타입은 숫자가 자연스럽습니다(가능하면 BIGINT로 변경 권장).
@@ -45,7 +49,8 @@ public class Comment extends BaseTimeEntity {
 
     //--------------생성자---------------------------
 
-    public Comment(String content, Post post, Comment parent){
+    public Comment(Profile profile, Post post, String content, Comment parent){
+        this.createdBy = profile;
         this.content = content;
         this.post = post;
         this.parent = parent;

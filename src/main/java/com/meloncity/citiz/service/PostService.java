@@ -1,6 +1,7 @@
 package com.meloncity.citiz.service;
 
 import com.meloncity.citiz.domain.*;
+import com.meloncity.citiz.dto.CommentResDto;
 import com.meloncity.citiz.dto.CustomUserDetails;
 import com.meloncity.citiz.dto.PostReqDto;
 import com.meloncity.citiz.dto.PostRespDto;
@@ -8,6 +9,7 @@ import com.meloncity.citiz.handler.exception.ResourceNotFoundException;
 import com.meloncity.citiz.repository.PostRepository;
 import com.meloncity.citiz.repository.PostTagRepository;
 import com.meloncity.citiz.repository.ProfileRepository;
+import com.meloncity.citiz.util.TimeAgoUtil;
 import com.meloncity.citiz.util.file.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -120,9 +122,14 @@ public class PostService {
 
         PostRespDto postRespDto = new PostRespDto();
         postRespDto.setProfileId(post.getCreatedBy().getId());
+        postRespDto.setProfileName(post.getCreatedBy().getName());
+        postRespDto.setProfileImg(post.getCreatedBy().getImageUrl());
         postRespDto.setPostId(post.getId());
         postRespDto.setTitle(post.getTitle());
         postRespDto.setContent(post.getContent());
+
+        // 생성된 시간
+        postRespDto.setCreatedAt(TimeAgoUtil.formatTime(post.getCreateDate()));
 
         // 사진
         List<String> images = new ArrayList<>();
@@ -137,6 +144,14 @@ public class PostService {
             tags.add(postTag.getTag().getTag());
         }
         postRespDto.setTags(tags);
+
+        // 댓글
+        List<CommentResDto> comments = new ArrayList<>();
+        for(Comment comment : post.getComments()){
+            CommentResDto commentDto = new CommentResDto(comment.getCreatedBy(), comment);
+            comments.add(commentDto);
+        }
+        postRespDto.setComments(comments);
 
         return postRespDto;
     }

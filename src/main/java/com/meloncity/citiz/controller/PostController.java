@@ -1,9 +1,7 @@
 package com.meloncity.citiz.controller;
 
-import com.meloncity.citiz.dto.CustomUserDetails;
-import com.meloncity.citiz.dto.PostReqDto;
-import com.meloncity.citiz.dto.PostRespDto;
-import com.meloncity.citiz.dto.ResponseDto;
+import com.meloncity.citiz.dto.*;
+import com.meloncity.citiz.service.CommentService;
 import com.meloncity.citiz.service.PostService;
 import com.meloncity.citiz.util.CustomDateUtil;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +19,7 @@ import java.time.LocalDateTime;
 public class PostController {
 
     private final PostService postService;
+    private final CommentService commentService;
 
     // 게시글 전체 조회
     @GetMapping
@@ -80,6 +79,47 @@ public class PostController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ResponseDto<String>> deletePost(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails user) throws IOException {
         String result = postService.deletePost(id, user);
+        int resultCode = "SUCCESS".equals(result) ? 1 : -1 ;
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new ResponseDto<>(
+                        resultCode,
+                        result,
+                        result,
+                        CustomDateUtil.toStringFormat(LocalDateTime.now())
+                ));
+    }
+
+    // 게시글 댓글 등록
+    @PostMapping("/{id}/comments")
+    public ResponseEntity saveComment(@PathVariable Long id, @RequestBody CommentReqDto commentReqDto, @AuthenticationPrincipal CustomUserDetails user){
+        System.out.println("postid : " + commentReqDto.getPostId());
+        System.out.println("comment : " + commentReqDto.getContent());
+        CommentResDto commentResDto = commentService.saveComment(id, commentReqDto, user);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(new ResponseDto<>(
+                        1,
+                        commentResDto,
+                        "SUCCESS",
+                        CustomDateUtil.toStringFormat(LocalDateTime.now())
+                ));
+    }
+
+    @PutMapping("/{id}/comments")
+    public ResponseEntity updateComment(@PathVariable Long id, @RequestBody CommentReqDto commentReqDto, @AuthenticationPrincipal CustomUserDetails user){
+        ResponseDto responseDto = commentService.updateComment(id, commentReqDto, user);
+
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(responseDto);
+    }
+
+    @DeleteMapping("/{id}/comments")
+    public ResponseEntity deleteComment(@PathVariable Long id, @RequestBody CommentReqDto commentReqDto, @AuthenticationPrincipal CustomUserDetails user){
+        String result = commentService.deleteComment(id, commentReqDto, user);
         int resultCode = "SUCCESS".equals(result) ? 1 : -1 ;
 
         return ResponseEntity
