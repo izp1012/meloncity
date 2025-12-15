@@ -119,7 +119,6 @@ public class PostService {
     }
     public PostRespDto getPost(Long id){
         Post post = postRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Post not found"));
-
         PostRespDto postRespDto = new PostRespDto();
         postRespDto.setProfileId(post.getCreatedBy().getId());
         postRespDto.setProfileName(post.getCreatedBy().getName());
@@ -134,7 +133,7 @@ public class PostService {
         // 사진
         List<String> images = new ArrayList<>();
         for(PostPhoto postPhoto : post.getPhotos()){
-            images.add("/img/" + postPhoto.getImgUrl());
+            images.add(postPhoto.getImgUrl());
         }
         postRespDto.setImages(images);
 

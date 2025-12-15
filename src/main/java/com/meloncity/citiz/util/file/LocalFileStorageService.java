@@ -25,11 +25,10 @@ public class LocalFileStorageService implements FileStorageService{
         String fileName = UUID.randomUUID() + ext;
 
         Path path = Paths.get(baseDir, fileName);
-
         Files.createDirectories(path.getParent());
         file.transferTo(path.toFile());
 
-        return fileName; // 프론트에 사용할 URL
+        return "/" + fileName; // 프론트에 사용할 URL
     }
 
     @Override
