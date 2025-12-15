@@ -94,8 +94,6 @@ public class PostController {
     // 게시글 댓글 등록
     @PostMapping("/{id}/comments")
     public ResponseEntity saveComment(@PathVariable Long id, @RequestBody CommentReqDto commentReqDto, @AuthenticationPrincipal CustomUserDetails user){
-        System.out.println("postid : " + commentReqDto.getPostId());
-        System.out.println("comment : " + commentReqDto.getContent());
         CommentResDto commentResDto = commentService.saveComment(id, commentReqDto, user);
 
         return ResponseEntity
