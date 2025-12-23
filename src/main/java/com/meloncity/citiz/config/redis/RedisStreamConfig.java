@@ -35,7 +35,7 @@ public class RedisStreamConfig {
      * Redis Stream 초기화를 담당하는 Bean
      * 애플리케이션 시작 시 필요한 Stream과 Consumer Group을 생성
      */
-    @Bean
+    //@Bean
     public RedisStreamInitializer redisStreamInitializer(RedisTemplate<String, Object> redisTemplate) {
         log.info("Creating Redis Stream Initializer for stream: {}, consumer group: {}", 
                 streamName, consumerGroup);
@@ -47,27 +47,27 @@ public class RedisStreamConfig {
      * Redis Stream 설정 정보를 담는 Bean
      * 다른 서비스에서 스트림 설정을 쉽게 사용할 수 있도록 제공
      */
-    @Bean
-    public StreamSettings streamSettings() {
-        return StreamSettings.builder()
-                .streamName(streamName)
-                .consumerGroup(consumerGroup)
-                .consumerName(consumerName)
-                .blockTimeout(blockTimeout)
-                .batchSize(batchSize)
-                .build();
-    }
+    //@Bean
+//    public StreamSettings streamSettings() {
+//        return StreamSettings.builder()
+//                .streamName(streamName)
+//                .consumerGroup(consumerGroup)
+//                .consumerName(consumerName)
+//                .blockTimeout(blockTimeout)
+//                .batchSize(batchSize)
+//                .build();
+//    }
 
     /**
      * Redis Stream 설정 정보를 담는 클래스
      */
-    @Getter
-    @Builder
-    public static class StreamSettings {
-        private final String streamName;
-        private final String consumerGroup;
-        private final String consumerName;
-        private final long blockTimeout;
-        private final int batchSize;
-    }
+//    @Getter
+//    @Builder
+//    public static class StreamSettings {
+//        private final String streamName;
+//        private final String consumerGroup;
+//        private final String consumerName;
+//        private final long blockTimeout;
+//        private final int batchSize;
+//    }
 }

@@ -27,8 +27,8 @@ public class RedisService {
     private final RedisTemplate<String, Object> redisTemplate;
     @Getter
     private final PubSubChannels pubSubChannels;
-    @Getter
-    private final StreamSettings streamSettings;
+//    @Getter
+//    private final StreamSettings streamSettings;
 
     // ==================== Pub/Sub 관련 메서드 ====================
 
@@ -69,9 +69,9 @@ public class RedisService {
      * @param message 저장할 메시지 (Map 형태)
      * @return Stream에 추가된 메시지의 ID
      */
-    public String addToStream(Map<String, Object> message) {
-        return addToStream(streamSettings.getStreamName(), message);
-    }
+//    public String addToStream(Map<String, Object> message) {
+//        return addToStream(streamSettings.getStreamName(), message);
+//    }
 
     /**
      * Redis Stream에 메시지를 저장하는 메서드
@@ -125,9 +125,9 @@ public class RedisService {
     /**
      * 기본 스트림 정보 조회
      */
-    public Map<String, Object> getDefaultStreamInfo() {
-        return getStreamInfo(streamSettings.getStreamName());
-    }
+//    public Map<String, Object> getDefaultStreamInfo() {
+//        return getStreamInfo(streamSettings.getStreamName());
+//    }
 
     // ==================== 기본 Redis 연산 ====================
 
