@@ -35,6 +35,9 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 	implementation 'io.lettuce:lettuce-core'
 
+	// Kafka
+	implementation 'org.springframework.kafka:spring-kafka'
+
 	// Jackson for JSON processing
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
