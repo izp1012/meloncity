@@ -11,8 +11,10 @@ import com.meloncity.citiz.repository.ChatRoomParticipantRepository;
 import com.meloncity.citiz.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.stream.MapRecord;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +27,7 @@ import java.util.stream.Collectors;
 
 /**
  * 채팅 관련 비즈니스 로직을 처리하는 서비스
- * Redis Stream을 통한 메시지 처리와 데이터베이스 영속성 관리
+ * Kafka를 통한 메시지 처리와 데이터베이스 영속성 관리
  */
 @Service
 @RequiredArgsConstructor
@@ -37,9 +39,12 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomParticipantRepository participantRepository;
     private final ProfileRepository profileRepository;
-    private final RedisTemplate<String, Object> redisTemplate;
+//    private final RedisTemplate<String, Object> redisTemplate;
+    private final KafkaTemplate<String, ChatMessageDto> kafkaTemplate;
 
-    private final RedisStreamConfig.StreamSettings streamSettings;
+//    private final RedisStreamConfig.StreamSettings streamSettings;
+    @Value("${kafka.topic.chat:chat-messages}")
+    private String chatTopic;
 
     /**
      * 새로운 채팅방을 생성합니다.
@@ -130,10 +135,45 @@ public class ChatService {
         return true;
     }
 
+//    /**
+//     * Redis Stream에 채팅 메시지를 발행합니다.
+//     * @param messageDto 발행할 메시지 정보
+//     * @return Stream에 추가된 메시지의 ID
+//     */
+//    public String publishMessage(ChatMessageDto messageDto) {
+//        // 채팅방과 발신자 검증
+//        validateChatRoomAndSender(messageDto.getRoomId(), messageDto.getSenderId());
+//
+//        // 현재 시간 설정
+//        if (messageDto.getTimestamp() == null) {
+//            messageDto.setTimestamp(LocalDateTime.now());
+//        }
+//        messageDto.setStatus(ChatStatus.SENT);
+//
+//        // Redis Stream에 메시지 추가
+//        Map<String, Object> messageMap = new HashMap<>();
+//        messageMap.put("roomId", messageDto.getRoomId());
+//        messageMap.put("senderId", messageDto.getSenderId());
+//        messageMap.put("senderName", messageDto.getSenderName());
+//        messageMap.put("content", messageDto.getContent());
+//        messageMap.put("type", messageDto.getType().name());
+//        messageMap.put("status", messageDto.getStatus().name());
+//        messageMap.put("timestamp", messageDto.getTimestamp().toString());
+//        messageMap.put("tempId", messageDto.getTempId());
+//
+//        MapRecord<String, String, Object> record = MapRecord.create(streamSettings.getStreamName(), messageMap);
+//        String streamId = redisTemplate.opsForStream().add(record).getValue();
+//
+//        log.info("메시지가 Stream에 추가됨 - Stream ID: {}, Room: {}, Sender: {}",
+//                streamId, messageDto.getRoomId(), messageDto.getSenderId());
+//
+//        return streamId;
+//    }
+
     /**
-     * Redis Stream에 채팅 메시지를 발행합니다.
+     * Kafka에 채팅 메시지를 발행합니다.
      * @param messageDto 발행할 메시지 정보
-     * @return Stream에 추가된 메시지의 ID
+     * @return 발행 성공 여부 (Kafka는 비동기이므로 성공적으로 요청되었음을 의미)
      */
     public String publishMessage(ChatMessageDto messageDto) {
         // 채팅방과 발신자 검증
@@ -145,24 +185,13 @@ public class ChatService {
         }
         messageDto.setStatus(ChatStatus.SENT);
 
-        // Redis Stream에 메시지 추가
-        Map<String, Object> messageMap = new HashMap<>();
-        messageMap.put("roomId", messageDto.getRoomId());
-        messageMap.put("senderId", messageDto.getSenderId());
-        messageMap.put("senderName", messageDto.getSenderName());
-        messageMap.put("content", messageDto.getContent());
-        messageMap.put("type", messageDto.getType().name());
-        messageMap.put("status", messageDto.getStatus().name());
-        messageMap.put("timestamp", messageDto.getTimestamp().toString());
-        messageMap.put("tempId", messageDto.getTempId());
+        // Kafka에 메시지 발행
+        kafkaTemplate.send(chatTopic, String.valueOf(messageDto.getRoomId()), messageDto);
 
-        MapRecord<String, String, Object> record = MapRecord.create(streamSettings.getStreamName(), messageMap);
-        String streamId = redisTemplate.opsForStream().add(record).getValue();
+        log.info("메시지가 Kafka Topic {}에 발행됨 - Room: {}, Sender: {}",
+                chatTopic, messageDto.getRoomId(), messageDto.getSenderId());
 
-        log.info("메시지가 Stream에 추가됨 - Stream ID: {}, Room: {}, Sender: {}",
-                streamId, messageDto.getRoomId(), messageDto.getSenderId());
-
-        return streamId;
+        return "KAFKA_SENT_" + messageDto.getTempId();
     }
 
     /**

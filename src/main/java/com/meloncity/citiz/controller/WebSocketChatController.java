@@ -80,11 +80,17 @@ public class WebSocketChatController {
             // 메시지 유효성 검증
             validateMessageContent(messageDto);
 
-            // Redis Stream에 메시지 발행
-            String streamId = chatService.publishMessage(messageDto);
+            //Redis Stream에 메시지 발행
+//            String streamId = chatService.publishMessage(messageDto);
 
-            log.info("채팅 메시지 Stream 발행 완료 - Room: {}, Stream ID: {}, Sender: {}",
-                    roomId, streamId, userId);
+//            log.info("채팅 메시지 Stream 발행 완료 - Room: {}, Stream ID: {}, Sender: {}",
+//                    roomId, streamId, userId);
+
+            // Kafka에 메시지 발행
+            String kafkaResult = chatService.publishMessage(messageDto);
+
+            log.info("채팅 메시지 Kafka 발행 완료 - Room: {}, Result: {}, Sender: {}",
+                    roomId, kafkaResult, userId);
 
         } catch (IllegalArgumentException e) {
             log.warn("채팅 메시지 처리 실패 - Room: {}, Sender: {}, Reason: {}",

@@ -7,10 +7,10 @@ server:
 #Spring 관련 설정
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://34.123.138.165:5432/postgres
     driver-class-name: org.postgresql.Driver
-    username: suzin
-    password: pass1234@
+    username: citiz
+    password: citiz1234!
     hikari:
       connection-timeout: 30000       # 연결 타임아웃: 30초
       maximum-pool-size: 10           # 최대 연결 풀 크기
@@ -24,7 +24,7 @@ spring:
       ddl-auto: update
     properties:
       '[hibernate.default_batch_fetch_size]': 100
-      '[hibernate.format_sql]': true
+      '[hibernate.format_sql]': false
     show-sql: true
   output:
     ansi:
@@ -34,24 +34,46 @@ spring:
     user:
       name: user
       password: 1234
-
+  # Redis 설정
   data:
     redis:
-      host: localhost
+      host: 34.123.138.165
       port: 6379
+  kafka:
+    bootstrap-servers: ${SPRING_KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    topic:
+      chat: chat-messages
+    consumer:
+      group-id: citiz-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # Redis Stream 설정과 매칭되는 Kafka 설정
+      max-poll-records: 10 # Redis의 batch-size: 10과 매칭
+      fetch-max-wait-ms: 2000 # Redis의 block-timeout: 2000과 매칭
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
+# WebSocket 설정
 websocket:
-  endpoint:
-  message-broker:
-  destination-prefix:
+  endpoint: /ws/chat # WebSocket 엔드포인트 URL
+  message-broker: /topic # 메시지 브로커 접두사
+  destination-prefix: /app # 클라이언트 -> 서버 메시지 접두사
 
+# Redis Stream 설정
+redis:
+  chat:
+    stream:
+      name: chat-stream # Redis Streams의 키 이름
+      consumer-group: chat-group # 메시지를 읽어갈 컨슈머 그룹 이름
 jwt:
-  secret: spring_security
-  issuer: spring_security
-  audience: spring_security.com
-  access:
-    expiration: 60 #초 단위
-    header: Authorization
-  refresh:
-    expiration: 1 # day 단위
-    header: Authorization-Refresh
+  secret: "replace-with-long-random-secret-key-at-least-256-bits"
+  expiration: 3600   # 초 (1시간)
+  issuer: "citiz-auth"
+
+app:
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+      - https://citiz.cloud
