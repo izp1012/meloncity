@@ -24,7 +24,7 @@ public class ProfileController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
-    public ResponseEntity<ResponseDto<ProfileSignUpResp>> signUp(@Valid @RequestBody ProfileSignUpReq req) {
+    public ResponseEntity<ResponseDto<ProfileSignUpResp>> signUp(@Valid @ModelAttribute ProfileSignUpReq req) {
         String strName = profileService.signUp(req);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
